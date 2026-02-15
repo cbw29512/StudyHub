@@ -28,6 +28,8 @@
   <script>
 "use strict";
 
+const APP_VERSION = "v3.0.1";
+
 // ═══════════════════════════════════════════════════════════════
 //  STORAGE LAYER  (compatible with existing studyhub:v2 keys)
 // ═══════════════════════════════════════════════════════════════
@@ -248,7 +250,7 @@ function Dashboard({nav,toast}){
   });
   return h("div",null,
     h("div",{style:{marginBottom:24}},
-      h("h1",{style:{margin:0,fontSize:26,fontWeight:800}},"Study Hub"),
+      h("h1",{style:{margin:0,fontSize:26,fontWeight:800}},"Study Hub ",h("span",{style:{fontSize:12,fontWeight:600,padding:"3px 8px",borderRadius:999,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",verticalAlign:"middle",opacity:0.5}},APP_VERSION)),
       h("p",{style:{margin:"4px 0 0",opacity:0.6,fontSize:14}},streak>0?"\uD83D\uDD25 "+streak+"-day streak \u2014 keep it alive!":"Start your streak by logging some study time today.")
     ),
     // Stats
