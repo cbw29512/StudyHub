@@ -1,0 +1,61 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Study Hub - Dashboard</title>
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <script defer src="./assets/js/common.js"></script>
+  <script defer src="./assets/js/dashboard.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a href="./index.html">Dashboard</a>
+      <a href="./cards.html">Cards</a>
+      <a href="./vlog.html">Vlog</a>
+      <a href="./journal.html">Journal</a>
+      <a href="./netplus.html">Net+</a>
+      <a href="./secplus.html">Sec+</a>
+      <a href="./secai.html">SecAI</a>
+      <span class="spacer"></span>
+      <button id="btnExportAll">Backup Export</button>
+    </div>
+
+    <div class="cardBox">
+      <h1>Study Hub</h1>
+      <div class="note">Flashcards + accountability logging + certification notes — all in one offline-friendly site.</div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="statCard">
+        <div class="statTitle">Streak</div>
+        <div id="streak" class="statBig">0</div>
+      </div>
+      <div class="statCard">
+        <div class="statTitle">Today minutes</div>
+        <div id="todayMin" class="statBig">0</div>
+      </div>
+      <div class="statCard">
+        <div class="statTitle">Last 7 days minutes</div>
+        <div id="weekMin" class="statBig">0</div>
+      </div>
+    </div>
+
+    <h2>Quick Start</h2>
+    <div class="cardBox">
+      <div class="row">
+        <a class="pill" href="./cards.html">Start cards</a>
+        <a class="pill" href="./vlog.html">Log study</a>
+        <a class="pill" href="./netplus.html">Network+ page</a>
+        <a class="pill" href="./secplus.html">Security+ page</a>
+        <a class="pill" href="./secai.html">Security AI page</a>
+      </div>
+      <div class="hr"></div>
+      <div class="note" id="hint"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+</body>
+</html>

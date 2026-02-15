@@ -1,0 +1,17 @@
+﻿[
+  {
+    "q": "What does DHCP do?",
+    "a": "Automatically assigns IP configuration (IP, gateway, DNS) to clients.",
+    "why": "It prevents manual IP configuration and reduces conflicts by leasing addresses from a pool."
+  },
+  {
+    "q": "What port does DNS typically use?",
+    "a": "UDP/53 (and TCP/53 for zone transfers/large responses).",
+    "why": "Most queries are UDP for speed; TCP is used when reliability/size demands it."
+  },
+  {
+    "q": "What is the difference between a hub and a switch?",
+    "a": "A hub repeats traffic to all ports; a switch forwards frames based on MAC addresses.",
+    "why": "Switching reduces collisions and improves efficiency by learning MAC-to-port mappings."
+  }
+]
