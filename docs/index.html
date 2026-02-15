@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Hub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { box-sizing: border-box; margin: 0; }
+    body { background: #0a0e1a; color: #e4e8f7; font-family: 'Inter', system-ui, sans-serif; }
+    ::selection { background: rgba(59,130,246,0.3); }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    input, select, textarea, button { font-family: inherit; }
+    @keyframes fadeInToast { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .card-flip { transition: transform 0.5s ease; transform-style: preserve-3d; }
+    .card-flip.flipped { transform: rotateY(180deg); }
+    .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; }
+    .card-back { transform: rotateY(180deg); }
+  </style>
+</head>
+<body>
+<div id="appVersionBadge" style="position:fixed;top:10px;right:12px;z-index:999999;
+font:12px system-ui;padding:6px 12px;border-radius:999px;background:#111;color:#fff;
+opacity:.92;box-shadow:0 6px 18px rgba(0,0,0,.25);letter-spacing:.4px;">v3.1.1</div>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script>
+"use strict";
+
+const APP_VERSION = "v3.1.1";
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  STORAGE LAYER  (compatible with existing studyhub:v2 keys)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const KEY = { SETTINGS:"studyhub:v2:settings", JOURNAL:"studyhub:v2:journal", ACTIVITY:"studyhub:v2:activity" };
+const CERTS = {
+  netplus: { id:"netplus", title:"Network+",    color:"#3b82f6", emoji:"\u{1F310}" },
+  secplus: { id:"secplus", title:"Security+",   color:"#f59e0b", emoji:"\u{1F512}" },
+  secai:   { id:"secai",   title:"Security AI", color:"#a855f7", emoji:"\u{1F916}" }
+};
+const certKey = id => "studyhub:v2:cert:" + id;
+const jget = (k,fb) => { try { const r=localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch{ return fb; } };
+const jset = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : "id_"+Math.random().toString(16).slice(2)+"_"+Date.now().toString(16);
+const now = () => new Date().toISOString();
+const dayK = iso => { try { return new Date(iso).toLocaleDateString("en-CA"); } catch{ return String(iso).slice(0,10); } };
+const fmtTs = iso => { try { return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); } catch{ return iso; } };
+
+const defaultSettings = () => ({currentCert:"netplus",logCardSessions:true});
+const getSettings = () => ({...defaultSettings(),...jget(KEY.SETTINGS,{})});
+const saveSettings = s => jset(KEY.SETTINGS, s);
+const defaultCert = id => ({certId:id,title:CERTS[id]?.title||id,notes:"",objectives:[],sessions:[]});
+const getCert = id => ({...defaultCert(id),...jget(certKey(id),{})});
+const saveCert = (id,d) => jset(certKey(id),d);
+const getJournal = () => jget(KEY.JOURNAL,[]);
+const saveJournal = a => jset(KEY.JOURNAL,a);
+const getActivity = () => jget(KEY.ACTIVITY,[]);
+const saveActivity = a => jset(KEY.ACTIVITY,a);
+
+const addJournalEntry = e => {
+  const arr=getJournal();
+  const entry={id:uid(),ts:now(),certId:e.certId||getSettings().currentCert,deckLabel:e.deckLabel||"",deckId:e.deckId||"",q:e.q||"",a:e.a||"",why:e.why||"",myNote:"",archived:false};
+  arr.unshift(entry); if(arr.length>3000) arr.length=3000; saveJournal(arr); return entry.id;
+};
+const addActivity = e => {
+  const arr=getActivity();
+  const entry={id:uid(),ts:now(),certId:e.certId||getSettings().currentCert,type:e.type||"accountability",minutes:Number(e.minutes||0),title:e.title||"",details:e.details||"",meta:e.meta||{}};
+  arr.unshift(entry); if(arr.length>5000) arr.length=5000; saveActivity(arr); return entry.id;
+};
+const streakFromActivity = arr => {
+  const days=new Set(arr.map(e=>dayK(e.ts))); let streak=0;
+  for(let i=0;i<3650;i++){ const dt=new Date(); dt.setHours(12,0,0,0); dt.setDate(dt.getDate()-i); if(days.has(dt.toLocaleDateString("en-CA"))) streak++; else break; }
+  return streak;
+};
+
+// deck parsing
+const parseTxt = text => {
+  const lines=text.replace(/\r\n/g,"\n").split("\n"); const cards=[]; let cur=null,field=null;
+  const push=()=>{ if(cur){const q=(cur.q||"").trim(),a=(cur.a||"").trim(),why=(cur.why||"").trim(); if(q&&a) cards.push({q,a,why,seen:0,correct:0,wrong:0});} cur=null;field=null; };
+  for(const raw of lines){ const line=raw.replace(/\t/g,"    ").trimEnd();
+    if(line.trim()==="---"){push();cur={q:"",a:"",why:""};continue;} if(!cur&&line.trim().startsWith("Q:")) cur={q:"",a:"",why:""}; if(!cur) continue;
+    if(line.startsWith("Q:")){field="q";cur.q+=(cur.q?"\n":"")+line.slice(2).trimStart();continue;}
+    if(line.startsWith("A:")){field="a";cur.a+=(cur.a?"\n":"")+line.slice(2).trimStart();continue;}
+    if(line.startsWith("WHY:")){field="why";cur.why+=(cur.why?"\n":"")+line.slice(4).trimStart();continue;}
+    if(field) cur[field]+=(cur[field]?"\n":"")+line;
+  } push(); return cards;
+};
+const parseJson = text => {
+  const raw=JSON.parse(text); const arr=Array.isArray(raw)?raw:(raw.cards&&Array.isArray(raw.cards)?raw.cards:null);
+  if(!arr) throw new Error("JSON must be array or {cards:[...]}");
+  return arr.map(x=>({q:String(x.q??x.question??""),a:String(x.a??x.answer??""),why:String(x.why??x.explanation??""),seen:0,correct:0,wrong:0})).filter(c=>c.q&&c.a);
+};
+const parseDeck = text => { const t=text.trimStart(); return (t.startsWith("[")||t.startsWith("{")) ? parseJson(text) : parseTxt(text); };
+const shuffle = arr => { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  REACT HELPERS
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const h = React.createElement;
+const {useState, useEffect, useCallback, useRef, useMemo} = React;
+
+// Styles
+const cardS = {background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16};
+const selS = {background:"rgba(255,255,255,0.08)",color:"#e9eefc",border:"1px solid rgba(255,255,255,0.1)",padding:"6px 10px",borderRadius:10,fontWeight:600,fontSize:13,outline:"none"};
+const btnS = bg => ({padding:"6px 14px",borderRadius:10,background:(bg||"").startsWith("rgba")?bg:(bg+"33"),border:"1px solid "+((bg||"").startsWith("rgba")?bg:(bg+"55")),color:"#e9eefc",fontWeight:700,fontSize:13,cursor:"pointer"});
+const kbdS = {fontSize:11,padding:"2px 6px",borderRadius:6,background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.12)",fontFamily:"monospace",marginLeft:4};
+const gradeBtnS = {padding:"14px 20px",borderRadius:14,border:"1px solid",color:"#e9eefc",fontWeight:700,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,flex:1};
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  REUSABLE COMPONENTS
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function ConfirmDialog({open,title,message,onConfirm,onCancel,danger}){
+  if(!open) return null;
+  return h("div",{onClick:onCancel,style:{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)"}},
+    h("div",{onClick:e=>e.stopPropagation(),style:{background:"#1a1f2e",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:"24px 28px",maxWidth:400,width:"90%"}},
+      h("h3",{style:{margin:"0 0 8px",fontSize:18,fontWeight:700}},title),
+      h("p",{style:{margin:"0 0 20px",opacity:0.8,lineHeight:1.5}},message),
+      h("div",{style:{display:"flex",gap:10,justifyContent:"flex-end"}},
+        h("button",{onClick:onCancel,style:{padding:"8px 16px",borderRadius:10,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"#e9eefc",fontWeight:600,cursor:"pointer"}},"Cancel"),
+        h("button",{onClick:onConfirm,style:{padding:"8px 16px",borderRadius:10,background:danger?"rgba(255,80,80,0.2)":"rgba(100,200,255,0.2)",border:"1px solid "+(danger?"rgba(255,80,80,0.3)":"rgba(100,200,255,0.3)"),color:"#e9eefc",fontWeight:700,cursor:"pointer"}},danger?"Yes, Delete":"Confirm")
+      )
+    )
+  );
+}
+
+function Toast({message,type}){
+  if(!message) return null;
+  const bg=type==="error"?"rgba(255,80,80,0.15)":type==="success"?"rgba(70,255,160,0.12)":"rgba(100,180,255,0.12)";
+  const bdr=type==="error"?"rgba(255,80,80,0.25)":type==="success"?"rgba(70,255,160,0.2)":"rgba(100,180,255,0.2)";
+  return h("div",{style:{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:12,background:bg,border:"1px solid "+bdr,color:"#e9eefc",fontWeight:600,fontSize:14,zIndex:9998,animation:"fadeInToast 0.2s ease",maxWidth:"90vw",textAlign:"center"}},message);
+}
+
+function CertBadge({certId,size}){
+  const c=CERTS[certId]; if(!c) return null;
+  const s=size==="lg"?{fontSize:13,padding:"5px 12px"}:{fontSize:11,padding:"3px 8px"};
+  return h("span",{style:{...s,borderRadius:999,background:c.color+"22",border:"1px solid "+c.color+"44",color:c.color,fontWeight:700,whiteSpace:"nowrap"}},c.emoji+" "+c.title);
+}
+
+function EmptyState({icon,title,subtitle}){
+  return h("div",{style:{textAlign:"center",padding:"40px 20px",opacity:0.6}},
+    h("div",{style:{fontSize:40,marginBottom:12}},icon),
+    h("div",{style:{fontWeight:700,fontSize:16,marginBottom:6}},title),
+    h("div",{style:{fontSize:14,lineHeight:1.5}},subtitle)
+  );
+}
+
+function ProgressRing({pct,size,stroke,color,label}){
+  size=size||80; stroke=stroke||6; color=color||"#3b82f6";
+  const r=(size-stroke)/2, circ=2*Math.PI*r, offset=circ-(Math.min(pct,100)/100)*circ;
+  return h("div",{style:{position:"relative",width:size,height:size}},
+    h("svg",{width:size,height:size,style:{transform:"rotate(-90deg)"}},
+      h("circle",{cx:size/2,cy:size/2,r:r,fill:"none",stroke:"rgba(255,255,255,0.06)",strokeWidth:stroke}),
+      h("circle",{cx:size/2,cy:size/2,r:r,fill:"none",stroke:color,strokeWidth:stroke,strokeDasharray:circ,strokeDashoffset:offset,strokeLinecap:"round",style:{transition:"stroke-dashoffset 0.6s ease"}})
+    ),
+    h("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+      h("span",{style:{fontSize:size*0.22,fontWeight:800}},Math.round(pct)+"%"),
+      label && h("span",{style:{fontSize:size*0.12,opacity:0.6}},label)
+    )
+  );
+}
+
+function WeekChart({activity}){
+  const days=[];
+  for(let i=6;i>=0;i--){ const dt=new Date(); dt.setHours(12,0,0,0); dt.setDate(dt.getDate()-i);
+    const key=dt.toLocaleDateString("en-CA");
+    const mins=activity.filter(e=>dayK(e.ts)===key).reduce((s,e)=>s+(Number(e.minutes)||0),0);
+    days.push({label:dt.toLocaleDateString(undefined,{weekday:"short"}),mins,key});
+  }
+  const max=Math.max(1,...days.map(d=>d.mins));
+  return h("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:80}},
+    days.map(d=>h("div",{key:d.key,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}},
+      h("span",{style:{fontSize:10,fontWeight:700,opacity:0.7}},d.mins>0?d.mins:""),
+      h("div",{style:{width:"100%",height:Math.max(4,(d.mins/max)*60),borderRadius:4,background:d.mins>0?"linear-gradient(to top,#3b82f6,#60a5fa)":"rgba(255,255,255,0.06)",transition:"height 0.4s ease"}}),
+      h("span",{style:{fontSize:10,opacity:0.5}},d.label)
+    ))
+  );
+}
+
+function Card({title,children,style:extra,actions}){
+  return h("div",{style:{...cardS,...extra}},
+    (title||actions) && h("div",{style:{display:"flex",alignItems:"center",marginBottom:12}},
+      title && h("h2",{style:{margin:0,fontSize:15,fontWeight:700,opacity:0.8}},title),
+      h("div",{style:{flex:1}}),
+      actions
+    ),
+    children
+  );
+}
+
+function StatCard({label,value,icon,accent}){
+  return h("div",{style:{...cardS,display:"flex",alignItems:"center",gap:12,flex:1,minWidth:140}},
+    h("div",{style:{width:42,height:42,borderRadius:12,background:accent+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}},icon),
+    h("div",null,
+      h("div",{style:{fontSize:12,opacity:0.5,fontWeight:600}},label),
+      h("div",{style:{fontSize:20,fontWeight:800}},value)
+    )
+  );
+}
+
+function QBtn({onClick,icon,label}){
+  return h("button",{onClick,style:{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",color:"#e9eefc",fontWeight:600,fontSize:13,cursor:"pointer"}},icon+" "+label);
+}
+
+function Pill({label,value,color}){
+  return h("span",{style:{fontSize:12,fontWeight:700,padding:"4px 10px",borderRadius:999,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",color:color||"#e9eefc"}},label+": "+value);
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  STUDY TIMER
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function StudyTimer({certId,onComplete}){
+  const [seconds,setSeconds]=useState(0);
+  const [running,setRunning]=useState(false);
+  const intervalRef=useRef(null);
+  useEffect(()=>{
+    if(running) intervalRef.current=setInterval(()=>setSeconds(s=>s+1),1000);
+    else clearInterval(intervalRef.current);
+    return ()=>clearInterval(intervalRef.current);
+  },[running]);
+  const mins=Math.floor(seconds/60), secs=seconds%60;
+  const stop=()=>{ setRunning(false); if(mins>=1) onComplete(mins); setSeconds(0); };
+  return h("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
+    h("div",{style:{fontFamily:"ui-monospace, monospace",fontSize:22,fontWeight:800,minWidth:80,letterSpacing:1}},
+      String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0")),
+    !running ? h("button",{onClick:()=>setRunning(true),style:btnS("#3b82f6")},"\u25B6 Start") :
+      h(React.Fragment,null,
+        h("button",{onClick:()=>setRunning(false),style:btnS("#f59e0b")},"\u23F8 Pause"),
+        h("button",{onClick:stop,style:btnS("#ef4444")},"\u23F9 Stop & Log")
+      ),
+    !running && seconds>0 && h(React.Fragment,null,
+      h("button",{onClick:stop,style:btnS("#22c55e")},"Save "+mins+"m"),
+      h("button",{onClick:()=>setSeconds(0),style:btnS("rgba(255,255,255,0.1)")},"Reset")
+    )
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  DASHBOARD
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function Dashboard({nav,toast}){
+  const activity=getActivity(), journal=getJournal(), todayKey=dayK(now());
+  const streak=streakFromActivity(activity);
+  const todayMin=activity.filter(e=>dayK(e.ts)===todayKey).reduce((s,e)=>s+(Number(e.minutes)||0),0);
+  const weekMin=activity.filter(e=>(Date.now()-new Date(e.ts).getTime())<=7*86400000).reduce((s,e)=>s+(Number(e.minutes)||0),0);
+  const recent=activity.slice(0,8);
+  const certStats=Object.keys(CERTS).map(k=>{
+    const cert=getCert(k), objs=cert.objectives||[], done=objs.filter(o=>o.done).length;
+    return {...CERTS[k],total:objs.length,done,todayMin:activity.filter(e=>dayK(e.ts)===todayKey&&e.certId===k).reduce((s,e)=>s+(Number(e.minutes)||0),0)};
+  });
+  return h("div",null,
+    h("div",{style:{marginBottom:24}},
+      h("h1",{style:{margin:0,fontSize:26,fontWeight:800}},"Study Hub ",h("span",{style:{fontSize:12,fontWeight:600,padding:"3px 8px",borderRadius:999,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",verticalAlign:"middle",opacity:0.5}},APP_VERSION)),
+      h("p",{style:{margin:"4px 0 0",opacity:0.6,fontSize:14}},streak>0?"\uD83D\uDD25 "+streak+"-day streak \u2014 keep it alive!":"Start your streak by logging some study time today.")
+    ),
+    // Stats
+    h("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
+      h(StatCard,{label:"Streak",value:streak+" days",icon:"\uD83D\uDD25",accent:"#f59e0b"}),
+      h(StatCard,{label:"Today",value:todayMin+" min",icon:"\u23F1\uFE0F",accent:"#3b82f6"}),
+      h(StatCard,{label:"This Week",value:weekMin+" min",icon:"\uD83D\uDCCA",accent:"#22c55e"}),
+      h(StatCard,{label:"Wrong Answers",value:journal.filter(e=>!e.archived).length,icon:"\uD83D\uDCD3",accent:"#ef4444"})
+    ),
+    // Week chart
+    h(Card,{title:"Weekly Activity",style:{marginBottom:16}},h(WeekChart,{activity})),
+    // Cert cards
+    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:16}},
+      certStats.map(c=>h("div",{key:c.id,onClick:()=>nav("cert",c.id),style:{...cardS,cursor:"pointer",borderLeft:"3px solid "+c.color}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+          c.total>0 ? h(ProgressRing,{pct:(c.done/c.total)*100,size:56,stroke:5,color:c.color}) :
+            h("div",{style:{width:56,height:56,borderRadius:"50%",background:c.color+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}},c.emoji),
+          h("div",null,
+            h("div",{style:{fontWeight:800,fontSize:15}},c.emoji+" "+c.title),
+            h("div",{style:{opacity:0.6,fontSize:12,marginTop:2}},c.total>0?c.done+"/"+c.total+" objectives":"No objectives yet"),
+            c.todayMin>0 && h("div",{style:{fontSize:12,color:c.color,fontWeight:700,marginTop:2}},c.todayMin+" min today")
+          )
+        )
+      ))
+    ),
+    // Quick actions
+    h(Card,{title:"Quick Actions",style:{marginBottom:16}},
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        h(QBtn,{onClick:()=>nav("cards"),icon:"\uD83C\uDCCF",label:"Study Cards"}),
+        h(QBtn,{onClick:()=>nav("vlog"),icon:"\uD83D\uDCDD",label:"Log Study Time"}),
+        h(QBtn,{onClick:()=>nav("journal"),icon:"\uD83D\uDCD3",label:"Review Mistakes"}),
+        Object.values(CERTS).map(c=>h(QBtn,{key:c.id,onClick:()=>nav("cert",c.id),icon:c.emoji,label:c.title+" Notes"}))
+      )
+    ),
+    // Recent
+    h(Card,{title:"Recent Activity"},
+      recent.length===0 ? h(EmptyState,{icon:"\uD83D\uDCED",title:"No activity yet",subtitle:"Head to the Vlog tab to log your first study session"}) :
+        h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          recent.map(e=>h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",flexWrap:"wrap"}},
+            h(CertBadge,{certId:e.certId}),
+            h("span",{style:{fontWeight:600,fontSize:14}},e.title||e.type),
+            e.minutes>0 && h("span",{style:{fontSize:12,opacity:0.6}},e.minutes+" min"),
+            h("span",{style:{marginLeft:"auto",fontSize:12,opacity:0.4,fontFamily:"monospace"}},fmtTs(e.ts))
+          ))
+        )
+    )
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  CARDS PAGE
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function CardsPage({toast:showToast}){
+  const [deck,setDeck]=useState([]);
+  const [queue,setQueue]=useState([]);
+  const [current,setCurrent]=useState(null);
+  const [flipped,setFlipped]=useState(false);
+  const [graded,setGraded]=useState(false);
+  const [certId,setCertId]=useState(getSettings().currentCert||"netplus");
+  const [deckLabel,setDeckLabel]=useState("");
+  const [reqMode,setReqMode]=useState("smart");
+  const [session,setSession]=useState({correct:0,wrong:0,skip:0,start:0});
+  const fileRef=useRef(null);
+
+  const stats=useMemo(()=>({total:deck.length,seen:deck.reduce((s,c)=>s+(c.seen||0),0),correct:deck.reduce((s,c)=>s+(c.correct||0),0),wrong:deck.reduce((s,c)=>s+(c.wrong||0),0),queued:queue.length}),[deck,queue]);
+
+  const loadDk=useCallback((cards,label)=>{
+    if(!cards.length){showToast("No valid cards found. Each needs Q: and A:","error");return;}
+    const q=shuffle(cards.map((_,i)=>i));
+    setDeck(cards);setQueue(q.slice(1));setCurrent(q[0]);setDeckLabel(label);setFlipped(false);setGraded(false);
+    setSession({correct:0,wrong:0,skip:0,start:Date.now()});
+    showToast("Loaded \""+label+"\" \u2014 "+cards.length+" cards","success");
+  },[showToast]);
+
+  const doGrade=useCallback(outcome=>{
+    if(current===null||graded) return;
+    const d=[...deck]; const c={...d[current]};
+    c.seen=(c.seen||0)+1;
+    if(outcome==="correct") c.correct=(c.correct||0)+1;
+    if(outcome==="wrong") c.wrong=(c.wrong||0)+1;
+    d[current]=c; setDeck(d);
+    const q=[...queue];
+    if(reqMode==="smart"&&outcome==="wrong") q.splice(Math.min(q.length,2+Math.floor(Math.random()*4)),0,current);
+    else q.push(current);
+    setQueue(q); setFlipped(true); setGraded(true);
+    setSession(s=>({...s,[outcome]:s[outcome]+1}));
+    if(outcome==="wrong"){ addJournalEntry({certId,deckLabel,q:c.q,a:c.a,why:c.why}); showToast("\u274C Missed \u2014 logged to Journal. Read WHY, then Next \u2192","error"); }
+    else if(outcome==="correct") showToast("\u2705 Nailed it! Read WHY to reinforce, then Next \u2192","success");
+  },[current,graded,deck,queue,reqMode,certId,deckLabel,showToast]);
+
+  const doNext=useCallback(()=>{
+    if(!queue.length){ showToast("Deck complete! \uD83C\uDF89 Reshuffling...","success"); const q=shuffle(deck.map((_,i)=>i)); setQueue(q.slice(1));setCurrent(q[0]);setFlipped(false);setGraded(false);return; }
+    const q=[...queue]; const next=q.shift(); setQueue(q);setCurrent(next);setFlipped(false);setGraded(false);
+  },[queue,deck,showToast]);
+
+  const endSess=useCallback(()=>{
+    const mins=Math.max(1,Math.round((Date.now()-session.start)/60000));
+    addActivity({certId,type:"cards_session",minutes:mins,title:"Cards: "+deckLabel,details:"\u2705 "+session.correct+"  \u274C "+session.wrong+"  \u23ED "+session.skip});
+    setDeck([]);setQueue([]);setCurrent(null);setFlipped(false);setGraded(false);
+    showToast("Session logged: "+mins+" min, "+session.correct+" correct, "+session.wrong+" wrong","success");
+  },[session,certId,deckLabel,showToast]);
+
+  useEffect(()=>{
+    const handler=e=>{
+      if(!deck.length) return;
+      if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT") return;
+      if(e.code==="Space"){e.preventDefault();setFlipped(f=>!f);}
+      if(e.key==="c"||e.key==="C"){e.preventDefault();doGrade("correct");}
+      if(e.key==="w"||e.key==="W"){e.preventDefault();doGrade("wrong");}
+      if(e.key==="n"||e.key==="N"){e.preventDefault();if(graded) doNext(); else doGrade("skip");}
+    };
+    window.addEventListener("keydown",handler);
+    return ()=>window.removeEventListener("keydown",handler);
+  },[deck,graded,doGrade,doNext]);
+
+  const handleFile=async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{ const text=await f.text(); loadDk(parseDeck(text),f.name.replace(/\.(txt|json)$/i,"")); }
+    catch(err){ showToast("Failed to load: "+err.message,"error"); }
+    e.target.value="";
+  };
+
+  return h("div",null,
+    h("h1",{style:{margin:"0 0 16px",fontSize:24,fontWeight:800}},"\uD83C\uDCCF Flashcards"),
+    // Controls
+    h(Card,{style:{marginBottom:16}},
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}},
+        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600}},"Cert: ",
+          h("select",{value:certId,onChange:e=>{setCertId(e.target.value);const s=getSettings();s.currentCert=e.target.value;saveSettings(s);},style:selS},
+            Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.emoji+" "+c.title)))),
+        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600}},"Requeue: ",
+          h("select",{value:reqMode,onChange:e=>setReqMode(e.target.value),style:selS},
+            h("option",{value:"smart"},"Smart (wrong = sooner)"),h("option",{value:"back"},"Back of deck"))),
+        h("div",{style:{flex:1}}),
+        h("button",{onClick:()=>fileRef.current?.click(),style:btnS("#3b82f6")},"\uD83D\uDCC2 Load Deck"),
+        h("input",{ref:fileRef,type:"file",accept:".txt,.json",onChange:handleFile,style:{display:"none"}}),
+        deck.length>0 && h("button",{onClick:endSess,style:btnS("#ef4444")},"\u23F9 End Session")
+      ),
+      deck.length>0 && h("div",{style:{display:"flex",gap:12,marginTop:12,flexWrap:"wrap"}},
+        h(Pill,{label:"Deck",value:deck.length+" cards"}),h(Pill,{label:"Seen",value:stats.seen}),
+        h(Pill,{label:"Correct",value:stats.correct,color:"#22c55e"}),h(Pill,{label:"Wrong",value:stats.wrong,color:"#ef4444"}),
+        h(Pill,{label:"Queue",value:stats.queued})
+      )
+    ),
+    // Card or empty
+    deck.length===0 ?
+      h(Card,null,
+        h(EmptyState,{icon:"\uD83C\uDCCF",title:"No deck loaded",subtitle:"Click 'Load Deck' above to import a .txt or .json flashcard file"}),
+        h("div",{style:{marginTop:16,padding:14,borderRadius:12,background:"rgba(255,255,255,0.03)",fontSize:13,lineHeight:1.6,opacity:0.7}},
+          h("strong",null,"Deck format (.txt):"),h("br"),
+          "---",h("br"),"Q: Your question here",h("br"),"A: The answer",h("br"),"WHY: Explanation of why this is correct",h("br"),"---")
+      ) :
+    current!==null && deck[current] && h(React.Fragment,null,
+      // Flip card
+      h("div",{onClick:()=>setFlipped(f=>!f),style:{perspective:1200,cursor:"pointer",marginBottom:12}},
+        h("div",{className:"card-flip"+(flipped?" flipped":""),style:{position:"relative",minHeight:340,borderRadius:20,boxShadow:"0 12px 40px rgba(0,0,0,0.35)"}},
+          // Front
+          h("div",{className:"card-face",style:{background:"linear-gradient(135deg,rgba(59,130,246,0.08),rgba(30,58,95,0.15))",border:"1px solid rgba(255,255,255,0.08)"}},
+            h("div",{style:{fontSize:11,fontWeight:700,opacity:0.5,letterSpacing:2,textTransform:"uppercase",marginBottom:12}},"QUESTION"),
+            h("div",{style:{fontSize:20,fontWeight:700,lineHeight:1.45,whiteSpace:"pre-wrap",flex:1}},deck[current].q),
+            h("div",{style:{fontSize:12,opacity:0.4,marginTop:"auto"}},"Click or press Space to flip")
+          ),
+          // Back
+          h("div",{className:"card-face card-back",style:{background:"linear-gradient(135deg,rgba(34,197,94,0.06),rgba(20,60,40,0.12))",border:"1px solid rgba(255,255,255,0.08)",overflow:"auto"}},
+            h("div",{style:{fontSize:11,fontWeight:700,opacity:0.5,letterSpacing:2,textTransform:"uppercase",marginBottom:8}},"ANSWER"),
+            h("div",{style:{fontSize:18,fontWeight:700,lineHeight:1.45,whiteSpace:"pre-wrap"}},deck[current].a),
+            deck[current].why && h(React.Fragment,null,
+              h("div",{style:{height:1,background:"rgba(255,255,255,0.08)",margin:"16px 0"}}),
+              h("div",{style:{fontSize:11,fontWeight:700,opacity:0.5,letterSpacing:2,textTransform:"uppercase",marginBottom:8}},"WHY"),
+              h("div",{style:{fontSize:14,lineHeight:1.6,opacity:0.85,whiteSpace:"pre-wrap"}},deck[current].why)
+            )
+          )
+        )
+      ),
+      // Grade buttons
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        h("button",{onClick:()=>doGrade("correct"),disabled:graded,style:{...gradeBtnS,background:graded?"rgba(255,255,255,0.04)":"rgba(34,197,94,0.15)",borderColor:graded?"rgba(255,255,255,0.06)":"rgba(34,197,94,0.3)",opacity:graded?0.4:1}},
+          "\u2705 Correct ",h("kbd",{style:kbdS},"C")),
+        h("button",{onClick:()=>doGrade("wrong"),disabled:graded,style:{...gradeBtnS,background:graded?"rgba(255,255,255,0.04)":"rgba(239,68,68,0.15)",borderColor:graded?"rgba(255,255,255,0.06)":"rgba(239,68,68,0.3)",opacity:graded?0.4:1}},
+          "\u274C Wrong ",h("kbd",{style:kbdS},"W")),
+        h("button",{onClick:()=>{if(graded) doNext(); else doGrade("skip");},style:{...gradeBtnS,background:"rgba(100,180,255,0.12)",borderColor:"rgba(100,180,255,0.25)"}},
+          graded?"\u23ED Next Card":"\u23ED Skip"," ",h("kbd",{style:kbdS},"N"))
+      )
+    )
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  VLOG PAGE
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function VlogPage({toast:showToast,refresh}){
+  const [activity,setAct]=useState(getActivity());
+  const [certId,setCertId]=useState(getSettings().currentCert||"netplus");
+  const [type,setType]=useState("accountability");
+  const [title,setTitle]=useState("");
+  const [details,setDetails]=useState("");
+  const [minutes,setMinutes]=useState("");
+  const [search,setSearch]=useState("");
+  const [filterCert,setFilterCert]=useState("all");
+  const [confirm,setConfirm]=useState(null);
+  const todayKey=dayK(now());
+  const reload=()=>{setAct(getActivity());refresh?.();};
+  const handleAdd=()=>{
+    if(!title&&!details&&!minutes){showToast("Need at least a title, details, or minutes","error");return;}
+    addActivity({certId,type,minutes:Number(minutes||0),title,details});
+    const s=getSettings();s.currentCert=certId;saveSettings(s);
+    setTitle("");setDetails("");setMinutes("");showToast("\uD83D\uDCDD Logged!","success");reload();
+  };
+  const handleTimerDone=mins=>{
+    addActivity({certId,type:"timed_session",minutes:mins,title:title||"Timed study session",details:details||""});
+    showToast("\u23F1\uFE0F "+mins+" minutes logged!","success");reload();
+  };
+  const handleDelete=id=>{saveActivity(activity.filter(e=>e.id!==id));showToast("Deleted","success");reload();};
+  const filtered=activity.filter(e=>{
+    if(filterCert!=="all"&&e.certId!==filterCert) return false;
+    if(search){const hay=(e.title+" "+e.details+" "+e.type).toLowerCase();if(!hay.includes(search.toLowerCase())) return false;}
+    return true;
+  });
+  const streak=streakFromActivity(activity);
+  const todayMin=activity.filter(e=>dayK(e.ts)===todayKey).reduce((s,e)=>s+(Number(e.minutes)||0),0);
+
+  return h("div",null,
+    h("h1",{style:{margin:"0 0 4px",fontSize:24,fontWeight:800}},"\uD83D\uDCDD Accountability Log"),
+    h("p",{style:{margin:"0 0 16px",opacity:0.5,fontSize:14}},"Log everything: reading, labs, videos, practice tests, troubleshooting. Every entry keeps the streak alive."),
+    h("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
+      h(StatCard,{label:"Streak",value:streak+" days",icon:"\uD83D\uDD25",accent:"#f59e0b"}),
+      h(StatCard,{label:"Today",value:todayMin+" min",icon:"\u23F1\uFE0F",accent:"#3b82f6"})
+    ),
+    // Timer
+    h(Card,{title:"\u23F1\uFE0F Study Timer",style:{marginBottom:16}},
+      h(StudyTimer,{certId,onComplete:handleTimerDone}),
+      h("div",{style:{fontSize:12,opacity:0.5,marginTop:8}},"Start the timer, study, then stop to auto-log the time.")
+    ),
+    // Add entry
+    h(Card,{title:"Add Entry",style:{marginBottom:16}},
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}},
+        h("select",{value:certId,onChange:e=>setCertId(e.target.value),style:selS},
+          Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.emoji+" "+c.title))),
+        h("select",{value:type,onChange:e=>setType(e.target.value),style:selS},
+          h("option",{value:"accountability"},"\uD83D\uDCD6 Study"),h("option",{value:"lab"},"\uD83E\uDDEA Lab"),
+          h("option",{value:"video"},"\uD83C\uDFA5 Video"),h("option",{value:"practice_test"},"\uD83D\uDCDD Practice Test"),
+          h("option",{value:"review"},"\uD83D\uDD04 Review")),
+        h("input",{type:"number",min:"0",value:minutes,onChange:e=>setMinutes(e.target.value),placeholder:"Minutes",style:{...selS,width:90}})
+      ),
+      h("input",{type:"text",value:title,onChange:e=>setTitle(e.target.value),placeholder:"What did you study? (e.g., Subnetting, TLS handshake)",style:{...selS,width:"100%",marginBottom:8}}),
+      h("input",{type:"text",value:details,onChange:e=>setDetails(e.target.value),placeholder:"Details or notes (optional)",style:{...selS,width:"100%",marginBottom:10},onKeyDown:e=>{if(e.key==="Enter") handleAdd();}}),
+      h("button",{onClick:handleAdd,style:btnS("#3b82f6")},"+ Add Entry")
+    ),
+    // Feed
+    h(Card,{title:"Activity Feed",actions:h("button",{onClick:()=>setConfirm({action:()=>{saveActivity([]);reload();showToast("Activity cleared","success");},title:"Clear All Activity?",msg:"This permanently deletes all activity log entries."}),style:{...btnS("rgba(255,255,255,0.06)"),fontSize:12}},"Clear All")},
+      h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+        h("input",{type:"text",value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search...",style:{...selS,flex:1}}),
+        h("select",{value:filterCert,onChange:e=>setFilterCert(e.target.value),style:selS},
+          h("option",{value:"all"},"All Certs"),
+          Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.title)))
+      ),
+      filtered.length===0 ? h(EmptyState,{icon:"\uD83D\uDCED",title:"No entries yet",subtitle:"Log your first study session above"}) :
+        h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          filtered.slice(0,50).map(e=>h("div",{key:e.id,style:{padding:12,borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)"}},
+            h("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
+              h(CertBadge,{certId:e.certId}),
+              h("span",{style:{fontWeight:700,fontSize:14}},e.title||e.type),
+              e.minutes>0 && h("span",{style:{fontSize:12,padding:"2px 8px",borderRadius:999,background:"rgba(59,130,246,0.15)",color:"#60a5fa",fontWeight:700}},e.minutes+" min"),
+              h("span",{style:{marginLeft:"auto",fontSize:11,opacity:0.4,fontFamily:"monospace"}},fmtTs(e.ts)),
+              h("button",{onClick:()=>handleDelete(e.id),style:{padding:"4px 10px",borderRadius:8,background:"rgba(255,60,60,0.1)",border:"1px solid rgba(255,60,60,0.15)",color:"#ff6b6b",fontWeight:600,fontSize:11,cursor:"pointer"}},"\u2715")
+            ),
+            e.details && h("div",{style:{marginTop:6,fontSize:13,opacity:0.7,lineHeight:1.5}},e.details)
+          ))
+        )
+    ),
+    h(ConfirmDialog,{open:!!confirm,title:confirm?.title,message:confirm?.msg,danger:true,onConfirm:()=>{confirm?.action();setConfirm(null);},onCancel:()=>setConfirm(null)})
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  JOURNAL PAGE
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function JournalItem({entry:e,onUpdateNote,onToggleArchive}){
+  const [note,setNote]=useState(e.myNote||"");
+  const t=useRef(null);
+  const handleNote=v=>{setNote(v);clearTimeout(t.current);t.current=setTimeout(()=>onUpdateNote(e.id,v),400);};
+  return h("div",{style:{...cardS,borderLeft:"3px solid "+(CERTS[e.certId]?.color||"#666")}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap"}},
+      h(CertBadge,{certId:e.certId}),
+      h("span",{style:{fontSize:12,opacity:0.5}},e.deckLabel),
+      h("span",{style:{marginLeft:"auto",fontSize:11,opacity:0.4,fontFamily:"monospace"}},fmtTs(e.ts)),
+      h("button",{onClick:()=>onToggleArchive(e.id),style:{...btnS("rgba(255,255,255,0.06)"),fontSize:11,padding:"4px 10px"}},e.archived?"Unarchive":"Archive")
+    ),
+    h("div",{style:{marginBottom:10}},h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Question"),h("div",{style:{fontSize:15,fontWeight:600,lineHeight:1.45,whiteSpace:"pre-wrap"}},e.q)),
+    h("div",{style:{marginBottom:10}},h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Answer"),h("div",{style:{fontSize:14,lineHeight:1.5,whiteSpace:"pre-wrap",opacity:0.9}},e.a)),
+    e.why && h("div",{style:{marginBottom:10,padding:12,borderRadius:10,background:"rgba(59,130,246,0.06)"}},h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Why"),h("div",{style:{fontSize:13,lineHeight:1.6,opacity:0.85,whiteSpace:"pre-wrap"}},e.why)),
+    h("div",null,h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"My Note"),
+      h("textarea",{value:note,onChange:ev=>handleNote(ev.target.value),placeholder:"What tricked you? What rule fixes it? How will you spot it next time?",style:{width:"100%",minHeight:80,resize:"vertical",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:10,color:"#e9eefc",fontSize:13,lineHeight:1.5}}))
+  );
+}
+
+function JournalPage({toast:showToast}){
+  const [journal,setJ]=useState(getJournal());
+  const [search,setSearch]=useState("");
+  const [certFilter,setCertFilter]=useState("all");
+  const [hideArchived,setHideArchived]=useState(true);
+  const [confirm,setConfirm]=useState(null);
+  const reload=()=>setJ(getJournal());
+  const filtered=journal.filter(e=>{
+    if(certFilter!=="all"&&e.certId!==certFilter) return false;
+    if(hideArchived&&e.archived) return false;
+    if(search){const hay=(e.q+" "+e.a+" "+e.why+" "+e.myNote+" "+e.deckLabel).toLowerCase();if(!hay.includes(search.toLowerCase())) return false;}
+    return true;
+  });
+  const updateNote=(id,note)=>{const arr=getJournal();const idx=arr.findIndex(x=>x.id===id);if(idx>=0){arr[idx].myNote=note;saveJournal(arr);}};
+  const toggleArchive=id=>{const arr=getJournal();const idx=arr.findIndex(x=>x.id===id);if(idx>=0){arr[idx].archived=!arr[idx].archived;saveJournal(arr);reload();showToast(arr[idx].archived?"Archived":"Unarchived","success");}};
+
+  return h("div",null,
+    h("h1",{style:{margin:"0 0 4px",fontSize:24,fontWeight:800}},"\uD83D\uDCD3 Wrong-Answer Journal"),
+    h("p",{style:{margin:"0 0 16px",opacity:0.5,fontSize:14}},"Every card you miss lands here. Add notes to learn the pattern and beat it next time."),
+    h(Card,{style:{marginBottom:16}},
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
+        h("input",{type:"text",value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search questions, answers, notes...",style:{...selS,flex:1,minWidth:200}}),
+        h("select",{value:certFilter,onChange:e=>setCertFilter(e.target.value),style:selS},
+          h("option",{value:"all"},"All Certs"),Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.title))),
+        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600,cursor:"pointer"}},
+          h("input",{type:"checkbox",checked:hideArchived,onChange:e=>setHideArchived(e.target.checked),style:{transform:"scale(1.2)"}}),"Hide archived"),
+        h("div",{style:{flex:1}}),
+        h(Pill,{label:"Total",value:journal.length}),
+        h("button",{onClick:()=>setConfirm(true),style:{...btnS("rgba(255,255,255,0.06)"),fontSize:12}},"Clear All")
+      )
+    ),
+    filtered.length===0 ? h(Card,null,h(EmptyState,{icon:"\uD83C\uDFAF",title:"No wrong answers to show",subtitle:journal.length===0?"Study some flashcards \u2014 missed questions will appear here":"Try changing your filters"})) :
+      h("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+        filtered.slice(0,30).map(e=>h(JournalItem,{key:e.id,entry:e,onUpdateNote:updateNote,onToggleArchive:toggleArchive})),
+        filtered.length>30 && h("div",{style:{textAlign:"center",opacity:0.5,padding:12,fontSize:13}},"Showing first 30 of "+filtered.length)
+      ),
+    h(ConfirmDialog,{open:!!confirm,title:"Clear Entire Journal?",message:"This permanently deletes all wrong-answer entries and notes.",danger:true,onConfirm:()=>{saveJournal([]);reload();showToast("Journal cleared","success");setConfirm(null);},onCancel:()=>setConfirm(null)})
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  CERT PAGE
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function CertPage({certId,toast:showToast}){
+  const c=CERTS[certId];
+  const [data,setData]=useState(getCert(certId));
+  const [topic,setTopic]=useState("");
+  const [minutes,setMinutes]=useState("");
+  const [objText,setObjText]=useState("");
+  const noteTimer=useRef(null);
+
+  useEffect(()=>{setData(getCert(certId));setTopic("");setMinutes("");setObjText("");},[certId]);
+
+  const save=d=>{saveCert(certId,d);setData({...d});};
+  const handleNotes=val=>{clearTimeout(noteTimer.current);const d={...data,notes:val};setData(d);noteTimer.current=setTimeout(()=>{d.updatedAt=now();save(d);showToast("Notes saved","success");},500);};
+  const addSession=()=>{
+    if(!topic&&!minutes){showToast("Add a topic or minutes","error");return;}
+    const entry={id:uid(),ts:now(),topic:topic||"Study",minutes:Number(minutes||0)};
+    const d={...data,sessions:[entry,...(data.sessions||[])].slice(0,2000),updatedAt:now()};save(d);
+    addActivity({certId,type:"study_session",minutes:entry.minutes,title:entry.topic,details:"Logged from "+c.title+" page"});
+    setTopic("");setMinutes("");showToast("Session added + logged to Vlog","success");
+  };
+  const deleteSession=id=>{const d={...data,sessions:(data.sessions||[]).filter(s=>s.id!==id),updatedAt:now()};save(d);showToast("Session deleted","success");};
+  const replaceObjectives=()=>{
+    const lines=objText.split("\n").map(l=>l.trim().replace(/^[-*]\s+/,"").replace(/^\d+\.\s+/,"").trim()).filter(Boolean);
+    const d={...data,objectives:lines.map(t=>({text:t,done:false})),updatedAt:now()};save(d);showToast(lines.length+" objectives loaded","success");
+  };
+  const toggleObj=idx=>{const d={...data};d.objectives=[...(d.objectives||[])];d.objectives[idx]={...d.objectives[idx],done:!d.objectives[idx].done};d.updatedAt=now();save(d);};
+  const removeObj=idx=>{const d={...data};d.objectives=[...(d.objectives||[])];d.objectives.splice(idx,1);d.updatedAt=now();save(d);};
+  const objs=data.objectives||[], doneCount=objs.filter(o=>o.done).length;
+
+  return h("div",null,
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:16}},
+      h("div",{style:{width:48,height:48,borderRadius:14,background:c.color+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"2px solid "+c.color+"44"}},c.emoji),
+      h("div",null,
+        h("h1",{style:{margin:0,fontSize:24,fontWeight:800}},c.title),
+        data.updatedAt && h("div",{style:{fontSize:12,opacity:0.4}},"Last updated "+fmtTs(data.updatedAt))
+      ),
+      objs.length>0 && h("div",{style:{marginLeft:"auto"}},h(ProgressRing,{pct:objs.length?(doneCount/objs.length)*100:0,size:60,stroke:5,color:c.color,label:"done"}))
+    ),
+    // Notes
+    h(Card,{title:"\uD83D\uDCDD Notes",style:{marginBottom:16}},
+      h("textarea",{value:data.notes||"",onChange:e=>handleNotes(e.target.value),placeholder:c.title+" study notes, commands, diagrams, key concepts...",style:{width:"100%",minHeight:200,resize:"vertical",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:14,color:"#e9eefc",fontSize:14,lineHeight:1.6}})
+    ),
+    // Sessions
+    h(Card,{title:"\uD83D\uDCDA Study Sessions",style:{marginBottom:16}},
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}},
+        h("input",{type:"text",value:topic,onChange:e=>setTopic(e.target.value),placeholder:"Topic (e.g., Subnetting, PKI)",style:{...selS,flex:1,minWidth:200},onKeyDown:e=>{if(e.key==="Enter") addSession();}}),
+        h("input",{type:"number",min:"0",value:minutes,onChange:e=>setMinutes(e.target.value),placeholder:"Min",style:{...selS,width:80}}),
+        h("button",{onClick:addSession,style:btnS(c.color)},"+ Add Session")
+      ),
+      h("div",{style:{fontSize:12,opacity:0.5,marginBottom:12}},"Sessions auto-log to the Accountability Vlog too."),
+      (data.sessions||[]).length===0 ? h("div",{style:{opacity:0.5,fontSize:13,padding:12}},"No sessions yet") :
+        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          (data.sessions||[]).slice(0,20).map(s=>h("div",{key:s.id,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,255,255,0.03)"}},
+            h("span",{style:{fontWeight:700,fontSize:14}},s.topic),
+            h("span",{style:{fontSize:12,opacity:0.6}},s.minutes+" min"),
+            h("span",{style:{marginLeft:"auto",fontSize:11,opacity:0.4,fontFamily:"monospace"}},fmtTs(s.ts)),
+            h("button",{onClick:()=>deleteSession(s.id),style:{padding:"3px 8px",borderRadius:6,background:"rgba(255,60,60,0.1)",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:11}},"\u2715")
+          ))
+        )
+    ),
+    // Objectives
+    h(Card,{title:"\uD83C\uDFAF Objectives Checklist "+(objs.length>0?"("+doneCount+"/"+objs.length+")":"")},
+      h("div",{style:{marginBottom:12}},
+        h("textarea",{value:objText,onChange:e=>setObjText(e.target.value),placeholder:"Paste objectives one per line...",style:{width:"100%",minHeight:80,resize:"vertical",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:10,color:"#e9eefc",fontSize:13,lineHeight:1.5,marginBottom:8}}),
+        h("button",{onClick:replaceObjectives,style:btnS(c.color)},"Replace Objectives from Text")
+      ),
+      objs.length===0 ? h("div",{style:{opacity:0.5,fontSize:13,padding:12}},"No objectives yet. Paste them above.") :
+        h("div",{style:{display:"flex",flexDirection:"column",gap:4}},
+          objs.map((o,i)=>h("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:o.done?"rgba(34,197,94,0.06)":"rgba(255,255,255,0.02)",opacity:o.done?0.6:1}},
+            h("input",{type:"checkbox",checked:o.done,onChange:()=>toggleObj(i),style:{transform:"scale(1.2)",cursor:"pointer"}}),
+            h("span",{style:{flex:1,fontSize:14,textDecoration:o.done?"line-through":"none"}},o.text),
+            h("button",{onClick:()=>removeObj(i),style:{padding:"2px 6px",borderRadius:6,background:"none",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:12}},"\u2715")
+          ))
+        )
+    )
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  SETTINGS PAGE
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function SettingsPage({toast:showToast}){
+  const [confirm,setConfirm]=useState(null);
+  const fileRef=useRef(null);
+  const handleExport=()=>{
+    const payload={exported_at:now(),version:2,settings:getSettings(),certs:{netplus:getCert("netplus"),secplus:getCert("secplus"),secai:getCert("secai")},journal:getJournal(),activity:getActivity()};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url;a.download="studyhub_backup.json";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    showToast("Backup exported","success");
+  };
+  const handleImport=async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      const payload=JSON.parse(await f.text());
+      if(payload.settings) saveSettings(payload.settings);
+      if(payload.certs){for(const k of Object.keys(CERTS)){if(payload.certs[k]) saveCert(k,payload.certs[k]);}}
+      if(payload.journal) saveJournal(payload.journal);
+      if(payload.activity) saveActivity(payload.activity);
+      showToast("Backup restored! Refreshing...","success");
+      setTimeout(()=>window.location.reload(),500);
+    }catch(err){showToast("Import failed: "+err.message,"error");}
+  };
+  const activity=getActivity(), journal=getJournal();
+
+  return h("div",null,
+    h("h1",{style:{margin:"0 0 16px",fontSize:24,fontWeight:800}},"\u2699\uFE0F Settings & Data"),
+    h(Card,{title:"Backup & Restore",style:{marginBottom:16}},
+      h("p",{style:{margin:"0 0 12px",opacity:0.7,fontSize:14,lineHeight:1.5}},"All data is stored in your browser\u2019s localStorage. Export regularly to avoid data loss if you clear browser data."),
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        h("button",{onClick:handleExport,style:btnS("#3b82f6")},"\uD83D\uDCE5 Export Full Backup"),
+        h("button",{onClick:()=>fileRef.current?.click(),style:btnS("#22c55e")},"\uD83D\uDCE4 Import Backup (Replace)"),
+        h("input",{ref:fileRef,type:"file",accept:".json",onChange:handleImport,style:{display:"none"}})
+      )
+    ),
+    h(Card,{title:"Data Summary",style:{marginBottom:16}},
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+        h("div",{style:{padding:12,borderRadius:10,background:"rgba(255,255,255,0.03)"}},h("div",{style:{fontSize:12,opacity:0.5}},"Activity Entries"),h("div",{style:{fontSize:20,fontWeight:800}},activity.length)),
+        h("div",{style:{padding:12,borderRadius:10,background:"rgba(255,255,255,0.03)"}},h("div",{style:{fontSize:12,opacity:0.5}},"Journal Entries"),h("div",{style:{fontSize:20,fontWeight:800}},journal.length)),
+        Object.values(CERTS).map(c=>{const d=getCert(c.id);return h("div",{key:c.id,style:{padding:12,borderRadius:10,background:"rgba(255,255,255,0.03)"}},h("div",{style:{fontSize:12,opacity:0.5}},c.emoji+" "+c.title),h("div",{style:{fontSize:14}},(d.objectives||[]).length+" objectives, "+(d.sessions||[]).length+" sessions"));})
+      )
+    ),
+    h(Card,{title:"Danger Zone"},
+      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        h("button",{onClick:()=>setConfirm({action:()=>{saveActivity([]);showToast("Activity cleared","success");},title:"Clear All Activity?",msg:"This permanently deletes all vlog entries."}),style:btnS("#ef4444")},"Clear Activity Log"),
+        h("button",{onClick:()=>setConfirm({action:()=>{saveJournal([]);showToast("Journal cleared","success");},title:"Clear Journal?",msg:"This permanently deletes all wrong-answer entries."}),style:btnS("#ef4444")},"Clear Journal"),
+        h("button",{onClick:()=>setConfirm({action:()=>{Object.keys(CERTS).forEach(k=>saveCert(k,defaultCert(k)));showToast("Cert data reset","success");},title:"Reset All Cert Data?",msg:"This clears notes, sessions, and objectives for all certifications."}),style:btnS("#ef4444")},"Reset Cert Data")
+      )
+    ),
+    h(ConfirmDialog,{open:!!confirm,title:confirm?.title,message:confirm?.msg,danger:true,onConfirm:()=>{confirm?.action();setConfirm(null);},onCancel:()=>setConfirm(null)})
+  );
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  MAIN APP
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function App(){
+  const [page,setPage]=useState("dashboard");
+  const [certId,setCertId]=useState("netplus");
+  const [toastMsg,setToastMsg]=useState("");
+  const [toastType,setToastType]=useState("info");
+  const [,forceRender]=useState(0);
+  const toastTimer=useRef(null);
+
+  const toast=(msg,type)=>{clearTimeout(toastTimer.current);setToastMsg(msg);setToastType(type||"info");toastTimer.current=setTimeout(()=>setToastMsg(""),3000);};
+  const nav=(pg,id)=>{setPage(pg);if(id)setCertId(id);window.scrollTo(0,0);};
+  const refresh=()=>forceRender(n=>n+1);
+
+  const navItems=[
+    {id:"dashboard",icon:"\uD83D\uDCCA",label:"Dashboard"},
+    {id:"cards",icon:"\uD83C\uDCCF",label:"Cards"},
+    {id:"vlog",icon:"\uD83D\uDCDD",label:"Vlog"},
+    {id:"journal",icon:"\uD83D\uDCD3",label:"Journal"},
+    ...Object.values(CERTS).map(c=>({id:"cert:"+c.id,icon:c.emoji,label:c.title,certId:c.id})),
+    {id:"settings",icon:"\u2699\uFE0F",label:"Settings"}
+  ];
+  const activePage=page==="cert"?"cert:"+certId:page;
+
+  return h("div",{style:{minHeight:"100vh"}},
+    // Nav
+    h("nav",{style:{position:"sticky",top:0,zIndex:100,background:"rgba(10,14,26,0.85)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"0 16px"}},
+      h("div",{style:{maxWidth:960,margin:"0 auto",display:"flex",gap:2,overflowX:"auto",paddingBottom:1}},
+        navItems.map(n=>{
+          const active=activePage===n.id;
+          return h("button",{key:n.id,onClick:()=>n.certId?nav("cert",n.certId):nav(n.id),style:{
+            padding:"12px 14px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",
+            borderBottom:active?"2px solid #3b82f6":"2px solid transparent",
+            color:active?"#fff":"rgba(255,255,255,0.5)",fontWeight:active?700:500,
+            fontSize:13,cursor:"pointer",whiteSpace:"nowrap",transition:"all 0.15s",
+            display:"flex",alignItems:"center",gap:5
+          }},h("span",{style:{fontSize:14}},n.icon)," ",n.label);
+        })
+      )
+    ),
+    // Content
+    h("main",{style:{maxWidth:960,margin:"0 auto",padding:"20px 16px 80px"}},
+      page==="dashboard" && h(Dashboard,{nav,toast}),
+      page==="cards" && h(CardsPage,{toast}),
+      page==="vlog" && h(VlogPage,{toast,refresh}),
+      page==="journal" && h(JournalPage,{toast}),
+      page==="cert" && h(CertPage,{certId,toast}),
+      page==="settings" && h(SettingsPage,{toast})
+    ),
+    h(Toast,{message:toastMsg,type:toastType})
+  );
+}
+
+// Mount
+ReactDOM.createRoot(document.getElementById("root")).render(h(React.StrictMode,null,h(App)));
+  </script>
+</body>
+</html>
