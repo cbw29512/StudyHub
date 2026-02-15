@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "certs": [
+    {
+      "id": "netplus",
+      "name": "CompTIA Network+",
+      "exam": "N10-009",
+      "domains": [
+        { "id": "d1", "name": "Networking Fundamentals" },
+        { "id": "d2", "name": "Network Implementations" },
+        { "id": "d3", "name": "Network Operations" },
+        { "id": "d4", "name": "Network Security" },
+        { "id": "d5", "name": "Network Troubleshooting" }
+      ]
+    },
+    {
+      "id": "secplus",
+      "name": "CompTIA Security+",
+      "exam": "SY0-701",
+      "domains": [
+        { "id": "d1", "name": "General Security Concepts" },
+        { "id": "d2", "name": "Threats, Vulnerabilities, and Mitigations" },
+        { "id": "d3", "name": "Security Architecture" },
+        { "id": "d4", "name": "Security Operations" },
+        { "id": "d5", "name": "Security Program Management and Oversight" }
+      ]
+    },
+    {
+      "id": "security_ai",
+      "name": "Security AI",
+      "exam": "",
+      "domains": [
+        { "id": "d1", "name": "AI Fundamentals" },
+        { "id": "d2", "name": "AI for Detection" },
+        { "id": "d3", "name": "AI for Response" },
+        { "id": "d4", "name": "Governance & Ethics" }
+      ]
+    }
+  ]
+}
