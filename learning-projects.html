@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StudyHub — Learning Projects</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Page-specific styles (kept minimal; uses flex-card pattern) */
+    .page-wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+    .page-title { font-size: 28px; margin: 0 0 6px; }
+    .page-sub { opacity: 0.8; margin: 0 0 18px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+
+    .proj-card {
+      display: flex;
+      flex-direction: column;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      text-decoration: none;
+      color: inherit;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .proj-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.12); }
+    .proj-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #f3f3f3; display:block; }
+    .proj-body { padding: 14px 14px 16px; display:flex; flex-direction:column; gap: 6px; }
+    .proj-title { font-weight: 700; font-size: 16px; margin: 0; }
+    .proj-desc { margin: 0; opacity: 0.85; font-size: 13px; line-height: 1.35; }
+    .proj-meta { margin-top: 6px; font-size: 12px; opacity: 0.75; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <!-- If your site already has a header/nav component, this still works as a standalone page. -->
+  <div class="page-wrap">
+    <h1 class="page-title">Learning Projects</h1>
+    <p class="page-sub">Clickable project cards. Each opens the project’s GitHub Pages site in a new tab.</p>
+
+    <div id="grid" class="grid" aria-live="polite"></div>
+  </div>
+
+<script>
+async function loadProjects() {
+  const res = await fetch('./learning-projects.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to load learning-projects.json');
+  return await res.json();
+}
+
+const PLACEHOLDERS = [
+  { title:"Subnetting Sprint", desc:"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quick drills, fast wins.", url:"#", image:"" },
+  { title:"Firewall Lab", desc:"Lorem ipsum dolor sit amet. Practice rules, NAT, and logging in a safe sandbox.", url:"#", image:"" },
+  { title:"Packet Capture Playground", desc:"Lorem ipsum dolor sit amet. Wireshark scenarios with guided analysis prompts.", url:"#", image:"" },
+  { title:"Linux Hardening Mini-Build", desc:"Lorem ipsum dolor sit amet. Secure SSH, users, permissions, and auditing basics.", url:"#", image:"" },
+  { title:"Python CLI Tools", desc:"Lorem ipsum dolor sit amet. Build tiny utilities for parsing logs and metrics.", url:"#", image:"" },
+  { title:"Cloud Basics (Free Tier)", desc:"Lorem ipsum dolor sit amet. IAM, storage, networking—small, focused exercises.", url:"#", image:"" },
+  { title:"SOC Dashboard Prototype", desc:"Lorem ipsum dolor sit amet. Visualize events, alerts, and trends with cards.", url:"#", image:"" },
+  { title:"Active Directory Lab", desc:"Lorem ipsum dolor sit amet. Users, groups, GPO basics, and common pitfalls.", url:"#", image:"" },
+  { title:"API Practice Project", desc:"Lorem ipsum dolor sit amet. Build a simple REST API and deploy it.", url:"#", image:"" },
+  { title:"Blue Team Checklist", desc:"Lorem ipsum dolor sit amet. Incident steps, triage flows, and quick references.", url:"#", image:"" },
+  { title:"Vuln Scan Sandbox", desc:"Lorem ipsum dolor sit amet. Run scans and write short remediation notes.", url:"#", image:"" },
+  { title:"CTF Warmups", desc:"Lorem ipsum dolor sit amet. Small puzzles to build momentum and confidence.", url:"#", image:"" }
+];
+
+function cardTemplate(p, {placeholder=false}={}) {
+  const a = document.createElement('a');
+  a.className = 'proj-card';
+  a.href = p.url || '#';
+
+  if (placeholder || (p.url === '#')) {
+    a.addEventListener('click', (e) => e.preventDefault());
+    a.style.opacity = '0.92';
+  } else {
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  }
+
+  const img = document.createElement('img');
+  img.className = 'proj-thumb';
+  img.alt = `${p.title} thumbnail`;
+  img.loading = 'lazy';
+  img.src = p.image || '';
+
+  // Fallback if image missing
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0b1224"/>
+            <stop offset="1" stop-color="#111a33"/>
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#g)"/>
+        <rect x="40" y="40" width="1120" height="595" rx="28" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)"/>
+        <text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle"
+              font-family="Inter, Arial" font-size="52" fill="#e9eefc">${p.title}</text>
+        <text x="50%" y="57%" dominant-baseline="middle" text-anchor="middle"
+              font-family="Inter, Arial" font-size="22" fill="rgba(233,238,252,0.75)">
+          Preview image placeholder
+        </text>
+      </svg>
+    `);
+  };
+
+  const body = document.createElement('div');
+  body.className = 'proj-body';
+
+  const h = document.createElement('p');
+  h.className = 'proj-title';
+  h.textContent = p.title;
+
+  const d = document.createElement('p');
+  d.className = 'proj-desc';
+  d.textContent = p.desc || '';
+
+  const m = document.createElement('div');
+  m.className = 'proj-meta';
+  m.textContent = (placeholder || p.url === '#') ? "Coming soon…" : p.url;
+
+  body.appendChild(h);
+  body.appendChild(d);
+  body.appendChild(m);
+
+  a.appendChild(img);
+  a.appendChild(body);
+  return a;
+}
+
+(async () => {
+  const grid = document.getElementById('grid');
+  try {
+    const projects = await loadProjects();
+
+    // Always show real projects first
+    projects.forEach(p => grid.appendChild(cardTemplate(p)));
+
+    // If there are fewer than 8 real projects, pad with placeholders to make it feel “complete”
+    const MIN_CARDS = 8;
+    const need = Math.max(0, MIN_CARDS - projects.length);
+    for (let i=0; i<need; i++) {
+      grid.appendChild(cardTemplate(PLACEHOLDERS[i % PLACEHOLDERS.length], {placeholder:true}));
+    }
+  } catch (e) {
+    // If JSON fails entirely, show placeholders so page still looks good
+    PLACEHOLDERS.slice(0, 8).forEach(p => grid.appendChild(cardTemplate(p, {placeholder:true})));
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
