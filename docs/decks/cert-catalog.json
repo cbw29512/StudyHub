@@ -1,0 +1,166 @@
+{
+    "version":  1,
+    "certs":  [
+                  {
+                      "id":  "netplus",
+                      "name":  "CompTIA Network+",
+                      "exam":  "N10-009",
+                      "seriesCode":  "N10-009",
+                      "domains":  [
+                                      {
+                                          "name":  "Networking concepts",
+                                          "id":  "d1",
+                                          "weightPercent":  21
+                                      },
+                                      {
+                                          "name":  "Network implementation",
+                                          "id":  "d2",
+                                          "weightPercent":  19
+                                      },
+                                      {
+                                          "name":  "Network operations",
+                                          "id":  "d3",
+                                          "weightPercent":  16
+                                      },
+                                      {
+                                          "name":  "Network security",
+                                          "id":  "d4",
+                                          "weightPercent":  14
+                                      },
+                                      {
+                                          "name":  "Network troubleshooting",
+                                          "id":  "d5",
+                                          "weightPercent":  30
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "secplus",
+                      "name":  "CompTIA Security+",
+                      "exam":  "SY0-701",
+                      "seriesCode":  "SY0-701",
+                      "domains":  [
+                                      {
+                                          "name":  "General Security Concepts",
+                                          "id":  "d1",
+                                          "weightPercent":  12
+                                      },
+                                      {
+                                          "name":  "Threats, Vulnerabilities, and Mitigations",
+                                          "id":  "d2",
+                                          "weightPercent":  22
+                                      },
+                                      {
+                                          "name":  "Security Architecture",
+                                          "id":  "d3",
+                                          "weightPercent":  18
+                                      },
+                                      {
+                                          "name":  "Security Operations",
+                                          "id":  "d4",
+                                          "weightPercent":  28
+                                      },
+                                      {
+                                          "name":  "Security Program Management and Oversight",
+                                          "id":  "d5",
+                                          "weightPercent":  20
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "security_ai",
+                      "name":  "CompTIA SecAI+",
+                      "exam":  "CY0-001",
+                      "seriesCode":  "CY0-001",
+                      "launchDate":  "2026-02-17",
+                      "domains":  [
+                                      {
+                                          "name":  "Basic AI concepts related to cybersecurity",
+                                          "id":  "d1",
+                                          "weightPercent":  17
+                                      },
+                                      {
+                                          "name":  "Securing AI systems",
+                                          "id":  "d2",
+                                          "weightPercent":  40
+                                      },
+                                      {
+                                          "name":  "AI-assisted security",
+                                          "id":  "d3",
+                                          "weightPercent":  24
+                                      },
+                                      {
+                                          "name":  "AI governance, risk, and compliance",
+                                          "id":  "d4",
+                                          "weightPercent":  19
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "pentestplus",
+                      "name":  "CompTIA PenTest+",
+                      "exam":  "PT0-002",
+                      "domains":  [
+                                      {
+                                          "id":  "d1",
+                                          "name":  "Planning and Scoping"
+                                      },
+                                      {
+                                          "id":  "d2",
+                                          "name":  "Information Gathering and Vulnerability Scanning"
+                                      },
+                                      {
+                                          "id":  "d3",
+                                          "name":  "Attacks and Exploits"
+                                      },
+                                      {
+                                          "id":  "d4",
+                                          "name":  "Reporting and Communication"
+                                      },
+                                      {
+                                          "id":  "d5",
+                                          "name":  "Tools and Code Analysis"
+                                      }
+                                  ]
+                  },
+                  {
+                      "id":  "cissp",
+                      "name":  "ISC2 CISSP",
+                      "exam":  "CISSP",
+                      "domains":  [
+                                      {
+                                          "id":  "d1",
+                                          "name":  "Security and Risk Management"
+                                      },
+                                      {
+                                          "id":  "d2",
+                                          "name":  "Asset Security"
+                                      },
+                                      {
+                                          "id":  "d3",
+                                          "name":  "Security Architecture and Engineering"
+                                      },
+                                      {
+                                          "id":  "d4",
+                                          "name":  "Communication and Network Security"
+                                      },
+                                      {
+                                          "id":  "d5",
+                                          "name":  "Identity and Access Management (IAM)"
+                                      },
+                                      {
+                                          "id":  "d6",
+                                          "name":  "Security Assessment and Testing"
+                                      },
+                                      {
+                                          "id":  "d7",
+                                          "name":  "Security Operations"
+                                      },
+                                      {
+                                          "id":  "d8",
+                                          "name":  "Software Development Security"
+                                      }
+                                  ]
+                  }
+              ]
+}

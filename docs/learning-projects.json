@@ -1,0 +1,45 @@
+{
+  "updated": "2026-02-15",
+  "sections": [
+    {
+      "title": "Certification Journey",
+      "subtitle": "The public timeline + proof of work",
+      "items": [
+        {
+          "title": "StudyHub (this site)",
+          "description": "Your Network+/Security+ study hub: notes, journal, flashcards, vlog, and projects.",
+          "status": "active",
+          "tags": ["Microsoft", "Network+", "Security+"],
+          "links": [
+            { "label": "Live Site", "url": "https://cbw29512.github.io/StudyHub/" },
+            { "label": "Repo", "url": "https://github.com/cbw29512/StudyHub" }
+          ]
+        },
+        {
+          "title": "CBW Resume",
+          "description": "Your resume / portfolio page (public).",
+          "status": "active",
+          "tags": ["Portfolio"],
+          "links": [
+            { "label": "Repo", "url": "https://github.com/cbw29512/CBWResume" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Labs & Tools",
+      "subtitle": "Hands-on builds that support the journey",
+      "items": [
+        {
+          "title": "Wilson-Lab",
+          "description": "Security+/Network+ lab orchestration & documentation (VMs/containers, repeatable labs).",
+          "status": "planned",
+          "tags": ["Security+", "HomeLab"],
+          "links": [
+            { "label": "Repo", "url": "https://github.com/cbw29512/Security_Lab" }
+          ]
+        }
+      ]
+    }
+  ]
+}

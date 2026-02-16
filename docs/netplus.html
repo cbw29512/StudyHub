@@ -1,0 +1,64 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Study Hub - Network+</title>
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <script defer src="./assets/js/common.js"></script>
+  <script defer src="./assets/js/cert.js"></script>
+</head>
+<body data-cert-id="netplus" data-cert-title="Network+" data-cert-file="netplus.html">
+  <div class="wrap">
+    <div class="nav">
+      <a href="./index.html">Dashboard</a>
+      <a href="./cards.html">Cards</a>
+      <a href="./vlog.html">Vlog</a>
+      <a href="./journal.html">Journal</a>
+      <a href="./netplus.html">Net+</a>
+      <a href="./secplus.html">Sec+</a>
+      <a href="./secai.html">SecAI</a>
+      <span class="spacer"></span>
+      <button id="btnExportAll">Backup Export</button>
+      <button id="btnExportCert">Export This Cert</button>
+    </div>
+
+    <div class="cardBox">
+      <h1 id="certTitle">Network+</h1>
+      <div class="row">
+        <span class="pill" id="updated">Updated: —</span>
+        <span class="spacer"></span>
+        <a class="pill" href="./cards.html">Practice cards</a>
+        <a class="pill" href="./vlog.html">Log study</a>
+      </div>
+      <div class="note">Notes + sessions + objectives checklist live here.</div>
+    </div>
+
+    <h2>Notes</h2>
+    <textarea id="notes" placeholder="Write your notes here..."></textarea>
+
+    <h2>Study Sessions</h2>
+    <div class="cardBox">
+      <div class="row">
+        <input id="topic" type="text" placeholder="Topic (e.g., Subnetting, IAM, SIEM)" style="flex:1;" />
+        <input id="minutes" type="number" min="0" step="1" placeholder="Minutes" />
+        <button id="btnAddSession">Add Session</button>
+      </div>
+      <div class="note">Adding a session here also writes into the Vlog automatically.</div>
+    </div>
+    <div id="sessionsList" class="list" style="margin-top:12px;"></div>
+
+    <h2>Objectives Checklist</h2>
+    <div class="cardBox">
+      <div class="row">
+        <button id="btnReplaceObjectives">Replace checklist from pasted lines</button>
+      </div>
+      <div class="note">Paste objectives one-per-line below and hit Replace.</div>
+    </div>
+    <textarea id="objPaste" placeholder="Paste objectives here, one per line..."></textarea>
+    <div id="objList" class="list" style="margin-top:12px;"></div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+</body>
+</html>

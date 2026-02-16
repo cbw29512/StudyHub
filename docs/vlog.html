@@ -1,0 +1,134 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Study Hub - Vlog</title>
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <script defer src="./assets/js/common.js"></script>
+  <script defer src="./assets/js/vlog.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a href="./index.html">Dashboard</a>
+      <a href="./cards.html">Cards</a>
+      <a href="./vlog.html">Vlog</a>
+      <a href="./journal.html">Journal</a>
+      <a href="./netplus.html">Net+</a>
+      <a href="./secplus.html">Sec+</a>
+      <a href="./secai.html">SecAI</a>
+      <span class="spacer"></span>
+      <button id="btnExportAll">Backup Export</button>
+    </div>
+
+    <div class="cardBox">
+      <h1>Vlog (Accountability Log)</h1>
+      <div class="note">Form-based + timestamped + searchable. Use this to keep yourself honest and spot weak areas fast.</div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="statCard">
+        <div class="statTitle">Streak</div>
+        <div id="streak" class="statBig">0</div>
+      </div>
+      <div class="statCard">
+        <div class="statTitle">Today minutes</div>
+        <div id="todayMin" class="statBig">0</div>
+      </div>
+      <div class="statCard">
+        <div class="statTitle">Last 7 days minutes</div>
+        <div id="weekMin" class="statBig">0</div>
+      </div>
+    </div>
+
+    <h2>Add Entry</h2>
+    <div class="cardBox">
+      <div class="row">
+        <label class="pill">Timestamp:
+          <input id="ts" type="datetime-local" />
+        </label>
+
+        <label class="pill">Cert:
+          <select id="certSelect"></select>
+        </label>
+
+        <label class="pill">Type:
+          <select id="typeSelect">
+            <option value="study" selected>study</option>
+            <option value="lab">lab</option>
+            <option value="video">video</option>
+            <option value="practice_test">practice test</option>
+            <option value="review">review</option>
+            <option value="troubleshooting">troubleshooting</option>
+            <option value="cards_session">cards session</option>
+          </select>
+        </label>
+
+        <input id="minutes" type="number" min="0" step="1" placeholder="Minutes" />
+        <input id="tags" type="text" placeholder="Tags (comma-separated)" style="flex:1;" />
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <input id="title" type="text" placeholder="Title (short)" style="flex:1;" />
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <input id="did" type="text" placeholder="What I did..." style="flex:1;" />
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <input id="learned" type="text" placeholder="What I learned..." style="flex:1;" />
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <input id="next" type="text" placeholder="Next action..." style="flex:1;" />
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button id="btnAdd">Add</button>
+        <button id="btnResetForm">Reset Form</button>
+        <span class="spacer"></span>
+        <span class="note">Keep it tight: one takeaway + one next step.</span>
+      </div>
+    </div>
+
+    <h2>Search & Filters</h2>
+    <div class="cardBox">
+      <div class="row">
+        <input id="search" type="text" placeholder="Search everything..." style="flex:1;" />
+        <label class="pill">Cert:
+          <select id="filterCert">
+            <option value="all" selected>All</option>
+          </select>
+        </label>
+        <label class="pill">Type:
+          <select id="filterType">
+            <option value="all" selected>All</option>
+            <option value="study">study</option>
+            <option value="lab">lab</option>
+            <option value="video">video</option>
+            <option value="practice_test">practice test</option>
+            <option value="review">review</option>
+            <option value="troubleshooting">troubleshooting</option>
+            <option value="cards_session">cards session</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <label class="pill">From: <input id="fromDate" type="date" /></label>
+        <label class="pill">To: <input id="toDate" type="date" /></label>
+        <span class="spacer"></span>
+        <button id="btnExportActivity">Export Activity</button>
+        <button id="btnClear" class="warn">Clear Activity</button>
+      </div>
+    </div>
+
+    <h2>Activity Feed</h2>
+    <div id="list" class="list" style="margin-top:12px;"></div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+</body>
+</html>

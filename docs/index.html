@@ -3,783 +3,1313 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Study Hub — AI-powered flashcard study system for CompTIA and security certifications" />
   <title>Study Hub</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { box-sizing: border-box; margin: 0; }
-    body { background: #0a0e1a; color: #e4e8f7; font-family: 'Inter', system-ui, sans-serif; }
-    ::selection { background: rgba(59,130,246,0.3); }
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-    input, select, textarea, button { font-family: inherit; }
-    @keyframes fadeInToast { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .card-flip { transition: transform 0.5s ease; transform-style: preserve-3d; }
-    .card-flip.flipped { transform: rotateY(180deg); }
-    .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; }
-    .card-back { transform: rotateY(180deg); }
-  </style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+    :root {
+      --bg:#0a0e1a; --surface:rgba(255,255,255,0.04); --surface-2:rgba(255,255,255,0.06);
+      --surface-3:rgba(255,255,255,0.08); --border:rgba(255,255,255,0.07); --border-2:rgba(255,255,255,0.10);
+      --text:#e4e8f7; --text-2:#e9eefc; --muted:rgba(255,255,255,0.5); --dim:rgba(255,255,255,0.4);
+      --blue:#3b82f6; --blue-soft:rgba(59,130,246,0.15); --blue-border:rgba(59,130,246,0.25);
+      --green:#22c55e; --green-soft:rgba(34,197,94,0.15); --green-border:rgba(34,197,94,0.3);
+      --red:#ef4444; --red-soft:rgba(239,68,68,0.15); --red-border:rgba(239,68,68,0.25);
+      --amber:#f59e0b; --purple:#a855f7; --cyan:#06b6d4;
+      --r-sm:6px; --r:10px; --r-lg:12px; --r-xl:14px; --r-2xl:16px; --r-3xl:20px; --r-pill:999px;
+      --font:'Outfit',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5}
+    ::selection{background:rgba(59,130,246,0.3)}
+    ::-webkit-scrollbar{width:8px} ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+    input,select,textarea,button{font-family:inherit}
+
+    /* Focus ring for a11y */
+    :focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+    button:focus-visible,a:focus-visible{outline-offset:2px}
+
+    @keyframes fadeInToast{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+    /* Layout */
+    .app-nav{position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 16px}
+    .nav-inner{max-width:960px;margin:0 auto;display:flex;gap:2px;overflow-x:auto;padding-bottom:1px;-webkit-overflow-scrolling:touch}
+    .nav-inner::-webkit-scrollbar{height:0}
+    .app-main{max-width:960px;margin:0 auto;padding:20px 16px 80px}
+
+    /* Nav */
+    .nav-btn{padding:12px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:5px}
+    .nav-btn.active{background:var(--surface-3);border-bottom-color:var(--blue);color:#fff;font-weight:700}
+    .nav-btn:hover:not(.active){color:rgba(255,255,255,0.7)}
+    .nav-icon{font-size:14px}
+    .nav-label{display:inline}
+
+    /* Card */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:16px}
+    .card-header{display:flex;align-items:center;margin-bottom:12px;gap:8px}
+    .card-title{margin:0;font-size:15px;font-weight:700;opacity:.8}
+
+    /* Stat */
+    .stat-card{display:flex;align-items:center;gap:12px;flex:1;min-width:130px}
+    .stat-icon{width:42px;height:42px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .stat-label{font-size:12px;opacity:.5;font-weight:600} .stat-value{font-size:20px;font-weight:800}
+
+    /* Buttons */
+    .btn{padding:6px 14px;border-radius:var(--r);border:1px solid;color:var(--text-2);font-weight:700;font-size:13px;cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px}
+    .btn:hover{opacity:.85} .btn:disabled{opacity:.4;cursor:default}
+    .btn-blue{background:var(--blue-soft);border-color:var(--blue-border)}
+    .btn-green{background:var(--green-soft);border-color:var(--green-border)}
+    .btn-red{background:var(--red-soft);border-color:var(--red-border)}
+    .btn-ghost{background:var(--surface-2);border-color:var(--border-2)}
+    .btn-amber{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)}
+    .btn-cyan{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.3);color:#67e8f9}
+    .btn-sm{padding:4px 10px;font-size:11px}
+    .qbtn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);background:var(--surface-2);border:1px solid var(--surface-3);color:var(--text-2);font-weight:600;font-size:13px;cursor:pointer}
+    .qbtn:hover{background:var(--surface-3)}
+
+    .grade-btn{padding:14px 20px;border-radius:var(--r-xl);border:1px solid;color:var(--text-2);font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;flex:1;transition:opacity .15s}
+    .grade-btn:disabled{opacity:.4;cursor:default}
+    .grade-correct{background:var(--green-soft);border-color:var(--green-border)}
+    .grade-wrong{background:var(--red-soft);border-color:var(--red-border)}
+    .grade-skip{background:rgba(100,180,255,.12);border-color:rgba(100,180,255,.25)}
+
+    /* Form */
+    .input,.sel{background:var(--surface-3);color:var(--text-2);border:1px solid var(--border-2);padding:6px 10px;border-radius:var(--r);font-weight:600;font-size:13px;outline:none}
+    .input:focus,.sel:focus{border-color:var(--blue)}
+    .textarea{width:100%;resize:vertical;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;color:var(--text-2);font-size:14px;line-height:1.6;outline:none}
+    .textarea:focus{border-color:rgba(59,130,246,.3)}
+
+    /* Pill/Badge */
+    .pill{font-size:12px;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--surface-3);color:var(--text-2);white-space:nowrap}
+    .cert-badge{border-radius:var(--r-pill);font-weight:700;white-space:nowrap;font-size:11px;padding:3px 8px}
+    .kbd{font-size:11px;padding:2px 6px;border-radius:var(--r-sm);background:var(--border-2);border:1px solid rgba(255,255,255,.12);font-family:var(--mono);margin-left:4px}
+
+    /* Flashcard */
+    .card-flip{transition:transform .5s ease;transform-style:preserve-3d}
+    .card-flip.flipped{transform:rotateY(180deg)}
+    .card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r-3xl);padding:28px;display:flex;flex-direction:column}
+    .card-back{transform:rotateY(180deg)}
+    .face-front{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(30,58,95,.15));border:1px solid var(--surface-3)}
+    .face-back{background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(20,60,40,.12));border:1px solid var(--surface-3);overflow:auto}
+    .section-label{font-size:11px;font-weight:700;opacity:.5;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:var(--r-lg);color:var(--text-2);font-weight:600;font-size:14px;z-index:9998;animation:fadeInToast .2s ease;max-width:90vw;text-align:center}
+    .toast-info{background:rgba(100,180,255,.12);border:1px solid rgba(100,180,255,.2)}
+    .toast-success{background:rgba(70,255,160,.12);border:1px solid rgba(70,255,160,.2)}
+    .toast-error{background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.25)}
+
+    /* Dialog */
+    .dialog-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+    .dialog-box{background:#1a1f2e;border:1px solid var(--border-2);border-radius:var(--r-2xl);padding:24px 28px;max-width:400px;width:90%}
+
+    /* Empty */
+    .empty{text-align:center;padding:40px 20px;opacity:.6}
+    .empty-icon{font-size:40px;margin-bottom:12px}
+    .empty-title{font-weight:700;font-size:16px;margin-bottom:6px}
+
+    /* Version badge */
+    .version-badge{position:fixed;top:10px;right:12px;z-index:999999;font:12px var(--font);padding:6px 12px;border-radius:var(--r-pill);background:#111;color:#fff;opacity:.85;box-shadow:0 6px 18px rgba(0,0,0,.25);letter-spacing:.4px}
+
+    /* Grids */
+    .stats-row{display:flex;gap:12px;flex-wrap:wrap}
+    .grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+
+    /* Items */
+    .activity-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
+    .feed-item{padding:12px;border-radius:var(--r-lg);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+    .session-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r);background:rgba(255,255,255,.03)}
+    .obj-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r)}
+    .obj-item.done{background:rgba(34,197,94,.06);opacity:.6}
+    .del-btn{padding:3px 8px;border-radius:var(--r-sm);background:rgba(255,60,60,.1);border:none;color:#ff6b6b;cursor:pointer;font-size:11px}
+    .del-btn-feed{padding:4px 10px;border-radius:8px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.15);color:#ff6b6b;font-weight:600;font-size:11px;cursor:pointer}
+    .min-badge{font-size:12px;padding:2px 8px;border-radius:var(--r-pill);background:var(--blue-soft);color:#60a5fa;font-weight:700}
+    .ts{font-size:11px;opacity:.4;font-family:var(--mono)}
+
+    /* Week chart */
+    .wk-chart{display:flex;gap:6px;align-items:flex-end;height:80px}
+    .wk-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+    .wk-bar{width:100%;border-radius:4px;transition:height .4s ease}
+
+    /* Cert dash */
+    .cert-card{cursor:pointer;border-left:3px solid}
+    .cert-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+
+    /* Why box */
+    .why-box{padding:12px;border-radius:var(--r);background:rgba(59,130,246,.06)}
+
+    /* Learning projects */
+    .lp-wrap{border:1px solid var(--surface-3);border-radius:18px;overflow:hidden;background:rgba(255,255,255,.03)}
+    .lp-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-bottom:1px solid var(--border);background:rgba(10,14,26,.6)}
+
+    /* Spinner */
+    .spinner{width:20px;height:20px;border:2px solid var(--surface-3);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+    .spinner-sm{width:14px;height:14px}
+    .pulsing{animation:pulse 1.5s ease-in-out infinite}
+
+    /* ═══ AI PANEL ═══ */
+    .ai-fab{position:fixed;bottom:24px;right:24px;z-index:900;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);border:2px solid rgba(255,255,255,.15);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(6,182,212,.35);transition:transform .15s,box-shadow .15s}
+    .ai-fab:hover{transform:scale(1.08);box-shadow:0 12px 40px rgba(6,182,212,.45)}
+
+    .ai-drawer{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100vw;z-index:950;background:#0d1120;border-left:1px solid var(--border-2);display:flex;flex-direction:column;animation:slideIn .25s ease;box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+    .ai-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .ai-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+    .ai-msg{padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.55;max-width:92%;word-break:break-word}
+    .ai-msg-user{background:var(--blue-soft);border:1px solid var(--blue-border);align-self:flex-end;border-bottom-right-radius:4px}
+    .ai-msg-ai{background:var(--surface-3);border:1px solid var(--border-2);align-self:flex-start;border-bottom-left-radius:4px}
+    .ai-msg-sys{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);align-self:center;text-align:center;font-size:12px;opacity:.8;max-width:100%}
+    .ai-input-row{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+    .ai-input{flex:1;background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--r-lg);padding:10px 14px;color:var(--text-2);font-size:14px;outline:none;resize:none;min-height:42px;max-height:120px}
+    .ai-input:focus{border-color:var(--cyan)}
+    .ai-send{width:42px;height:42px;border-radius:var(--r-lg);background:linear-gradient(135deg,#06b6d4,#3b82f6);border:none;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .ai-send:disabled{opacity:.4;cursor:default}
+
+    /* ═══ DECK BROWSER ═══ */
+    .deck-browser{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .deck-domain{padding:14px;border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:border-color .15s,background .15s}
+    .deck-domain:hover{border-color:var(--blue-border);background:var(--surface-2)}
+    .deck-domain-title{font-weight:700;font-size:14px;margin-bottom:4px}
+    .deck-domain-meta{font-size:12px;opacity:.5}
+    .deck-cert-group{margin-bottom:20px}
+    .deck-cert-label{font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.5;margin-bottom:10px;padding-left:2px}
+
+    /* ═══ DATE GROUP ═══ */
+    .date-group{font-size:12px;font-weight:700;opacity:.4;padding:8px 0 4px;border-bottom:1px solid rgba(255,255,255,.04);margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+
+    /* ═══ LOAD MORE ═══ */
+    .load-more{display:flex;justify-content:center;padding:12px}
+    .load-more-btn{padding:8px 24px;border-radius:var(--r-pill);background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-2);font-weight:600;font-size:13px;cursor:pointer}
+    .load-more-btn:hover{background:var(--surface-3)}
+
+    /* ═══ SHORTCUT HINT ═══ */
+    .shortcut-bar{display:flex;gap:12px;justify-content:center;padding:8px;opacity:.5;font-size:12px;flex-wrap:wrap}
+
+    /* Utilities */
+    .flex{display:flex}.flex-col{display:flex;flex-direction:column}.flex-wrap{flex-wrap:wrap}
+    .items-center{align-items:center}.justify-center{justify-content:center}
+    .gap-4{gap:4px}.gap-6{gap:6px}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}
+    .mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-10{margin-bottom:10px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}.mb-24{margin-bottom:24px}
+    .ml-auto{margin-left:auto}.mt-auto{margin-top:auto}.mt-4{margin-top:4px}.mt-6{margin-top:6px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}
+    .flex-1{flex:1}.hidden{display:none}.nowrap{white-space:nowrap}.pre-wrap{white-space:pre-wrap}
+    .pointer{cursor:pointer}.text-center{text-align:center}
+    .text-xs{font-size:11px}.text-sm{font-size:12px}.text-base{font-size:14px}.text-lg{font-size:15px}
+    .text-xl{font-size:18px}.text-2xl{font-size:20px}.text-3xl{font-size:24px}.text-4xl{font-size:26px}
+    .fw-6{font-weight:600}.fw-7{font-weight:700}.fw-8{font-weight:800}.fw-9{font-weight:900}
+    .o-40{opacity:.4}.o-50{opacity:.5}.o-60{opacity:.6}.o-70{opacity:.7}.o-85{opacity:.85}
+    .lh-snug{line-height:1.45}.lh-relaxed{line-height:1.6}
+    .mono{font-family:var(--mono)}.surface-s{background:rgba(255,255,255,.03)}
+    .p-12{padding:12px}.r-10{border-radius:var(--r)}.w-full{width:100%}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+    /* ═══ RESPONSIVE ═══ */
+    @media(max-width:640px){
+      .nav-label{display:none}
+      .nav-btn{padding:10px 12px;gap:0}
+      .nav-icon{font-size:18px}
+      .stat-value{font-size:16px}
+      .stat-icon{width:36px;height:36px;font-size:16px}
+      .stat-card{min-width:110px;gap:8px}
+      .grade-btn{padding:12px 14px;font-size:13px}
+      .text-4xl{font-size:22px}
+      .text-3xl{font-size:20px}
+      .ai-drawer{width:100vw}
+      .grid-auto{grid-template-columns:1fr}
+      .deck-browser{grid-template-columns:1fr}
+      .shortcut-bar{display:none}
+    }
+    @media(max-width:480px){
+      .stats-row{gap:8px}
+      .card{padding:12px}
+    }
+  
+    /* ═══════════════════════════════════════════════════
+       BLOG
+       ═══════════════════════════════════════════════════ */
+    .blog-grid { display:grid; grid-template-columns: 340px 1fr; gap:16px; align-items:start; }
+    @media (max-width: 980px) { .blog-grid { grid-template-columns: 1fr; } }
+    .blog-list { display:flex; flex-direction:column; gap:10px; }
+    .blog-post-card { cursor:pointer; padding:12px; border-radius:16px; border:1px solid var(--border); background:rgba(255,255,255,0.03); transition:transform 0.08s ease, border-color 0.08s ease; }
+    .blog-post-card:hover { transform: translateY(-1px); border-color: rgba(148,163,184,0.35); }
+    .blog-post-card.active { border-color: rgba(59,130,246,0.55); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+    .blog-post-title { font-weight:900; }
+    .blog-post-meta { margin-top:6px; font-size:12px; opacity:0.65; display:flex; gap:10px; flex-wrap:wrap; }
+    .tag { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:rgba(255,255,255,0.03); opacity:0.9; }
+    .card-link { display:block; padding:12px; border-radius:16px; border:1px solid var(--border); background:rgba(255,255,255,0.03); color:inherit; text-decoration:none; }
+    .card-link:hover { border-color: rgba(148,163,184,0.35); }
+    .blog-content { white-space:pre-wrap; line-height:1.55; }
+    .giscus-wrap { padding:12px; border-radius:18px; border:1px solid var(--border); background:rgba(255,255,255,0.03); }
+
+</style>
 </head>
 <body>
-<div id="appVersionBadge" style="position:fixed;top:10px;right:12px;z-index:999999;
-font:12px system-ui;padding:6px 12px;border-radius:999px;background:#111;color:#fff;
-opacity:.92;box-shadow:0 6px 18px rgba(0,0,0,.25);letter-spacing:.4px;">v3.1.1</div>
-  <div id="root"></div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-  <script>
+<div class="version-badge" aria-hidden="true">v4.0.0</div>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
 "use strict";
+const APP_VERSION="v4.1.0";
+const h=React.createElement;
+const{useState,useEffect,useCallback,useRef,useMemo}=React;
+const cn=(...a)=>a.filter(Boolean).join(" ");
 
-const APP_VERSION = "v3.1.1";
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  STORAGE LAYER  (compatible with existing studyhub:v2 keys)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const KEY = { SETTINGS:"studyhub:v2:settings", JOURNAL:"studyhub:v2:journal", ACTIVITY:"studyhub:v2:activity" };
-const CERTS = {
-  netplus: { id:"netplus", title:"Network+",    color:"#3b82f6", emoji:"\u{1F310}" },
-  secplus: { id:"secplus", title:"Security+",   color:"#f59e0b", emoji:"\u{1F512}" },
-  secai:   { id:"secai",   title:"Security AI", color:"#a855f7", emoji:"\u{1F916}" }
+/* ═══════════════════════════════════════════
+   STORAGE
+   ═══════════════════════════════════════════ */
+const KEY={SETTINGS:"studyhub:v2:settings",JOURNAL:"studyhub:v2:journal",ACTIVITY:"studyhub:v2:activity",BLOG:"studyhub:v2:blog_posts",GISCUS:"studyhub:v2:giscus",AI:"studyhub:ai:settings",DECKS:"studyhub:ai:decks"};
+const CERTS={
+  netplus:{id:"netplus",title:"Network+",color:"#3b82f6",emoji:"\u{1F310}"},
+  secplus:{id:"secplus",title:"Security+",color:"#f59e0b",emoji:"\u{1F512}"},
+  secai:{id:"secai",title:"Security AI",color:"#a855f7",emoji:"\u{1F916}"}
 };
-const certKey = id => "studyhub:v2:cert:" + id;
-const jget = (k,fb) => { try { const r=localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch{ return fb; } };
-const jset = (k,v) => localStorage.setItem(k, JSON.stringify(v));
-const uid = () => crypto.randomUUID ? crypto.randomUUID() : "id_"+Math.random().toString(16).slice(2)+"_"+Date.now().toString(16);
-const now = () => new Date().toISOString();
-const dayK = iso => { try { return new Date(iso).toLocaleDateString("en-CA"); } catch{ return String(iso).slice(0,10); } };
-const fmtTs = iso => { try { return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); } catch{ return iso; } };
+const certKey=id=>"studyhub:v2:cert:"+id;
+const jget=(k,fb)=>{try{const r=localStorage.getItem(k);return r?JSON.parse(r):fb}catch{return fb}};
+const notifyChange=(()=>{let t=null;return()=>{clearTimeout(t);t=setTimeout(()=>window.dispatchEvent(new Event("studyhub:changed")),0)}})();
+const jset=(k,v)=>{localStorage.setItem(k,JSON.stringify(v));notifyChange();};
+const uid=()=>crypto.randomUUID?.()|| "id_"+Math.random().toString(16).slice(2)+"_"+Date.now().toString(16);
+const now=()=>new Date().toISOString();
+const dayK=iso=>{try{return new Date(iso).toLocaleDateString("en-CA")}catch{return String(iso).slice(0,10)}};
+const fmtTs=iso=>{try{return new Date(iso).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}catch{return iso}};
+const fmtDay=iso=>{try{const d=new Date(iso);const t=dayK(now());const y=new Date();y.setDate(y.getDate()-1);if(dayK(iso)===t)return"Today";if(dayK(iso)===dayK(y.toISOString()))return"Yesterday";return d.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"})}catch{return iso}};
 
-const defaultSettings = () => ({currentCert:"netplus",logCardSessions:true});
-const getSettings = () => ({...defaultSettings(),...jget(KEY.SETTINGS,{})});
-const saveSettings = s => jset(KEY.SETTINGS, s);
-const defaultCert = id => ({certId:id,title:CERTS[id]?.title||id,notes:"",objectives:[],sessions:[]});
-const getCert = id => ({...defaultCert(id),...jget(certKey(id),{})});
-const saveCert = (id,d) => jset(certKey(id),d);
-const getJournal = () => jget(KEY.JOURNAL,[]);
-const saveJournal = a => jset(KEY.JOURNAL,a);
-const getActivity = () => jget(KEY.ACTIVITY,[]);
-const saveActivity = a => jset(KEY.ACTIVITY,a);
+const defaultSettings=()=>({currentCert:"netplus",logCardSessions:true});
+const getSettings=()=>({...defaultSettings(),...jget(KEY.SETTINGS,{})});
+const saveSettings=s=>jset(KEY.SETTINGS,s);
+const defaultCert=id=>({certId:id,title:CERTS[id]?.title||id,notes:"",objectives:[],sessions:[]});
+const getCert=id=>({...defaultCert(id),...jget(certKey(id),{})});
+const saveCert=(id,d)=>jset(certKey(id),d);
+const getJournal=()=>jget(KEY.JOURNAL,[]);
+const saveJournal=a=>jset(KEY.JOURNAL,a);
+const getActivity=()=>jget(KEY.ACTIVITY,[]);
+const saveActivity=a=>jset(KEY.ACTIVITY,a);
+const getAISettings=()=>({endpoint:"http://localhost:11434",model:"llama3.2",...jget(KEY.AI,{})});
+const saveAISettings=s=>jset(KEY.AI,s);
+const normalizeCertId=id=>id==="security_ai"?"secai":id;const getSavedDecks=()=>{const d=jget(KEY.DECKS,{});Object.values(d||{}).forEach(x=>{if(x&&x.certId)x.certId=normalizeCertId(x.certId);});return d||{};};
+const saveSavedDecks=d=>jset(KEY.DECKS,d);
 
-const addJournalEntry = e => {
-  const arr=getJournal();
-  const entry={id:uid(),ts:now(),certId:e.certId||getSettings().currentCert,deckLabel:e.deckLabel||"",deckId:e.deckId||"",q:e.q||"",a:e.a||"",why:e.why||"",myNote:"",archived:false};
-  arr.unshift(entry); if(arr.length>3000) arr.length=3000; saveJournal(arr); return entry.id;
+const addJournalEntry=e=>{const arr=getJournal();arr.unshift({id:uid(),ts:now(),certId:e.certId||getSettings().currentCert,deckLabel:e.deckLabel||"",deckId:e.deckId||"",q:e.q||"",a:e.a||"",why:e.why||"",myNote:"",archived:false});if(arr.length>3000)arr.length=3000;saveJournal(arr)};
+const addActivity=e=>{const arr=getActivity();arr.unshift({id:uid(),ts:now(),certId:e.certId||getSettings().currentCert,type:e.type||"accountability",minutes:Number(e.minutes||0),title:e.title||"",details:e.details||"",meta:e.meta||{}});if(arr.length>5000)arr.length=5000;saveActivity(arr)};
+const streakFromActivity=arr=>{const days=new Set(arr.map(e=>dayK(e.ts)));let s=0;for(let i=0;i<3650;i++){const dt=new Date();dt.setHours(12,0,0,0);dt.setDate(dt.getDate()-i);if(days.has(dt.toLocaleDateString("en-CA")))s++;else break}return s};
+
+/* ═══════════════════════════════════════════
+   DECK PARSING
+   ═══════════════════════════════════════════ */
+const parseTxt=text=>{const lines=text.replace(/\r\n/g,"\n").split("\n"),cards=[];let cur=null,field=null;const push=()=>{if(cur){const q=(cur.q||"").trim(),a=(cur.a||"").trim(),why=(cur.why||"").trim();if(q&&a)cards.push({q,a,why,seen:0,correct:0,wrong:0})}cur=null;field=null};for(const raw of lines){const line=raw.replace(/\t/g,"    ").trimEnd();if(line.trim()==="---"){push();cur={q:"",a:"",why:""};continue}if(!cur&&line.trim().startsWith("Q:"))cur={q:"",a:"",why:""};if(!cur)continue;if(line.startsWith("Q:")){field="q";cur.q+=(cur.q?"\n":"")+line.slice(2).trimStart();continue}if(line.startsWith("A:")){field="a";cur.a+=(cur.a?"\n":"")+line.slice(2).trimStart();continue}if(line.startsWith("WHY:")){field="why";cur.why+=(cur.why?"\n":"")+line.slice(4).trimStart();continue}if(field)cur[field]+=(cur[field]?"\n":"")+line}push();return cards};
+const parseJson=text=>{const raw=JSON.parse(text);const arr=Array.isArray(raw)?raw:(raw.cards&&Array.isArray(raw.cards)?raw.cards:null);if(!arr)throw new Error("JSON must be array or {cards:[...]}");return arr.map(x=>({q:String(x.q??x.question??""),a:String(x.a??x.answer??""),why:String(x.why??x.explanation??""),seen:0,correct:0,wrong:0})).filter(c=>c.q&&c.a)};
+const parseDeck=text=>{const t=text.trimStart();return(t.startsWith("[")||t.startsWith("{"))?parseJson(text):parseTxt(text)};
+const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ═══════════════════════════════════════════
+   AI SERVICE (Ollama)
+   ═══════════════════════════════════════════ */
+const aiChat=async(messages,onChunk)=>{
+  const s=getAISettings();
+  const res=await fetch(s.endpoint+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:s.model,messages,stream:!!onChunk})});
+  if(!res.ok)throw new Error("AI request failed: "+res.status+" — Is Ollama running at "+s.endpoint+"?");
+  if(!onChunk){const data=await res.json();return data.message?.content||""}
+  const reader=res.body.getReader(),dec=new TextDecoder();let full="";
+  while(true){const{done,value}=await reader.read();if(done)break;const chunk=dec.decode(value,{stream:true});for(const line of chunk.split("\n").filter(Boolean)){try{const j=JSON.parse(line);if(j.message?.content){full+=j.message.content;onChunk(full)}}catch{}}};return full;
 };
-const addActivity = e => {
-  const arr=getActivity();
-  const entry={id:uid(),ts:now(),certId:e.certId||getSettings().currentCert,type:e.type||"accountability",minutes:Number(e.minutes||0),title:e.title||"",details:e.details||"",meta:e.meta||{}};
-  arr.unshift(entry); if(arr.length>5000) arr.length=5000; saveActivity(arr); return entry.id;
-};
-const streakFromActivity = arr => {
-  const days=new Set(arr.map(e=>dayK(e.ts))); let streak=0;
-  for(let i=0;i<3650;i++){ const dt=new Date(); dt.setHours(12,0,0,0); dt.setDate(dt.getDate()-i); if(days.has(dt.toLocaleDateString("en-CA"))) streak++; else break; }
-  return streak;
+
+const aiGenerateDeck=async(certName,domainName,count=15)=>{
+  const s=getAISettings();
+  const prompt=`Generate exactly ${count} certification exam study flashcards for "${certName}" — domain: "${domainName}".
+
+Each card MUST have:
+- "q": A clear exam-style question
+- "a": A concise, correct answer (1-3 sentences)
+- "why": An explanation of why this is correct and a memory tip (2-4 sentences)
+
+Return ONLY a valid JSON array. No markdown, no backticks, no other text. Example format:
+[{"q":"...","a":"...","why":"..."}]`;
+
+  const res=await fetch(s.endpoint+"/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:s.model,prompt,stream:false,options:{temperature:0.7}})});
+  if(!res.ok)throw new Error("AI request failed: "+res.status);
+  const data=await res.json();
+  let text=(data.response||"").trim();
+  // Strip markdown fences if present
+  text=text.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"").trim();
+  const cards=JSON.parse(text);
+  if(!Array.isArray(cards))throw new Error("AI did not return an array");
+  return cards.map(x=>({q:String(x.q||""),a:String(x.a||""),why:String(x.why||""),seen:0,correct:0,wrong:0})).filter(c=>c.q&&c.a);
 };
 
-// deck parsing
-const parseTxt = text => {
-  const lines=text.replace(/\r\n/g,"\n").split("\n"); const cards=[]; let cur=null,field=null;
-  const push=()=>{ if(cur){const q=(cur.q||"").trim(),a=(cur.a||"").trim(),why=(cur.why||"").trim(); if(q&&a) cards.push({q,a,why,seen:0,correct:0,wrong:0});} cur=null;field=null; };
-  for(const raw of lines){ const line=raw.replace(/\t/g,"    ").trimEnd();
-    if(line.trim()==="---"){push();cur={q:"",a:"",why:""};continue;} if(!cur&&line.trim().startsWith("Q:")) cur={q:"",a:"",why:""}; if(!cur) continue;
-    if(line.startsWith("Q:")){field="q";cur.q+=(cur.q?"\n":"")+line.slice(2).trimStart();continue;}
-    if(line.startsWith("A:")){field="a";cur.a+=(cur.a?"\n":"")+line.slice(2).trimStart();continue;}
-    if(line.startsWith("WHY:")){field="why";cur.why+=(cur.why?"\n":"")+line.slice(4).trimStart();continue;}
-    if(field) cur[field]+=(cur[field]?"\n":"")+line;
-  } push(); return cards;
-};
-const parseJson = text => {
-  const raw=JSON.parse(text); const arr=Array.isArray(raw)?raw:(raw.cards&&Array.isArray(raw.cards)?raw.cards:null);
-  if(!arr) throw new Error("JSON must be array or {cards:[...]}");
-  return arr.map(x=>({q:String(x.q??x.question??""),a:String(x.a??x.answer??""),why:String(x.why??x.explanation??""),seen:0,correct:0,wrong:0})).filter(c=>c.q&&c.a);
-};
-const parseDeck = text => { const t=text.trimStart(); return (t.startsWith("[")||t.startsWith("{")) ? parseJson(text) : parseTxt(text); };
-const shuffle = arr => { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+/* ═══════════════════════════════════════════
+   CERT CATALOG (embedded from cert-catalog.json)
+   ═══════════════════════════════════════════ */
+const CATALOG=[
+  {id:"netplus",name:"CompTIA Network+",exam:"N10-009",domains:[{id:"d1",name:"Networking Fundamentals"},{id:"d2",name:"Network Implementations"},{id:"d3",name:"Network Operations"},{id:"d4",name:"Network Security"},{id:"d5",name:"Network Troubleshooting"}]},
+  {id:"secplus",name:"CompTIA Security+",exam:"SY0-701",domains:[{id:"d1",name:"General Security Concepts"},{id:"d2",name:"Threats, Vulnerabilities, and Mitigations"},{id:"d3",name:"Security Architecture"},{id:"d4",name:"Security Operations"},{id:"d5",name:"Security Program Management and Oversight"}]},
+  {id:"secai",name:"Security AI",exam:"",domains:[{id:"d1",name:"AI Fundamentals"},{id:"d2",name:"AI for Detection"},{id:"d3",name:"AI for Response"},{id:"d4",name:"Governance & Ethics"}]},
+  {id:"cissp",name:"ISC2 CISSP",exam:"CISSP",domains:[{id:"d1",name:"Security and Risk Management"},{id:"d2",name:"Asset Security"},{id:"d3",name:"Security Architecture and Engineering"},{id:"d4",name:"Communication and Network Security"},{id:"d5",name:"Identity and Access Management (IAM)"},{id:"d6",name:"Security Assessment and Testing"},{id:"d7",name:"Security Operations"},{id:"d8",name:"Software Development Security"}]}
+];
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  REACT HELPERS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const h = React.createElement;
-const {useState, useEffect, useCallback, useRef, useMemo} = React;
-
-// Styles
-const cardS = {background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16};
-const selS = {background:"rgba(255,255,255,0.08)",color:"#e9eefc",border:"1px solid rgba(255,255,255,0.1)",padding:"6px 10px",borderRadius:10,fontWeight:600,fontSize:13,outline:"none"};
-const btnS = bg => ({padding:"6px 14px",borderRadius:10,background:(bg||"").startsWith("rgba")?bg:(bg+"33"),border:"1px solid "+((bg||"").startsWith("rgba")?bg:(bg+"55")),color:"#e9eefc",fontWeight:700,fontSize:13,cursor:"pointer"});
-const kbdS = {fontSize:11,padding:"2px 6px",borderRadius:6,background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.12)",fontFamily:"monospace",marginLeft:4};
-const gradeBtnS = {padding:"14px 20px",borderRadius:14,border:"1px solid",color:"#e9eefc",fontWeight:700,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,flex:1};
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  REUSABLE COMPONENTS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════
+   COMPONENTS
+   ═══════════════════════════════════════════ */
 function ConfirmDialog({open,title,message,onConfirm,onCancel,danger}){
-  if(!open) return null;
-  return h("div",{onClick:onCancel,style:{position:"fixed",inset:0,zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)"}},
-    h("div",{onClick:e=>e.stopPropagation(),style:{background:"#1a1f2e",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:"24px 28px",maxWidth:400,width:"90%"}},
-      h("h3",{style:{margin:"0 0 8px",fontSize:18,fontWeight:700}},title),
-      h("p",{style:{margin:"0 0 20px",opacity:0.8,lineHeight:1.5}},message),
-      h("div",{style:{display:"flex",gap:10,justifyContent:"flex-end"}},
-        h("button",{onClick:onCancel,style:{padding:"8px 16px",borderRadius:10,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"#e9eefc",fontWeight:600,cursor:"pointer"}},"Cancel"),
-        h("button",{onClick:onConfirm,style:{padding:"8px 16px",borderRadius:10,background:danger?"rgba(255,80,80,0.2)":"rgba(100,200,255,0.2)",border:"1px solid "+(danger?"rgba(255,80,80,0.3)":"rgba(100,200,255,0.3)"),color:"#e9eefc",fontWeight:700,cursor:"pointer"}},danger?"Yes, Delete":"Confirm")
-      )
-    )
-  );
+  if(!open)return null;
+  return h("div",{onClick:onCancel,className:"dialog-overlay",role:"dialog","aria-modal":"true","aria-label":title},
+    h("div",{onClick:e=>e.stopPropagation(),className:"dialog-box"},
+      h("h3",{className:"fw-7 text-xl mb-8"},title),
+      h("p",{className:"o-80 lh-relaxed mb-20"},message),
+      h("div",{className:"flex gap-10",style:{justifyContent:"flex-end"}},
+        h("button",{onClick:onCancel,className:"btn btn-ghost"},"Cancel"),
+        h("button",{onClick:onConfirm,className:cn("btn",danger?"btn-red":"btn-blue")},danger?"Yes, Delete":"Confirm"))));
 }
 
 function Toast({message,type}){
-  if(!message) return null;
-  const bg=type==="error"?"rgba(255,80,80,0.15)":type==="success"?"rgba(70,255,160,0.12)":"rgba(100,180,255,0.12)";
-  const bdr=type==="error"?"rgba(255,80,80,0.25)":type==="success"?"rgba(70,255,160,0.2)":"rgba(100,180,255,0.2)";
-  return h("div",{style:{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",padding:"10px 20px",borderRadius:12,background:bg,border:"1px solid "+bdr,color:"#e9eefc",fontWeight:600,fontSize:14,zIndex:9998,animation:"fadeInToast 0.2s ease",maxWidth:"90vw",textAlign:"center"}},message);
+  if(!message)return null;
+  return h("div",{className:cn("toast","toast-"+(type||"info")),role:"alert","aria-live":"assertive"},message);
 }
 
-function CertBadge({certId,size}){
-  const c=CERTS[certId]; if(!c) return null;
-  const s=size==="lg"?{fontSize:13,padding:"5px 12px"}:{fontSize:11,padding:"3px 8px"};
-  return h("span",{style:{...s,borderRadius:999,background:c.color+"22",border:"1px solid "+c.color+"44",color:c.color,fontWeight:700,whiteSpace:"nowrap"}},c.emoji+" "+c.title);
+function CertBadge({certId}){
+  const c=CERTS[certId];if(!c)return null;
+  return h("span",{className:"cert-badge",style:{background:c.color+"22",border:"1px solid "+c.color+"44",color:c.color}},c.emoji+" "+c.title);
 }
 
 function EmptyState({icon,title,subtitle}){
-  return h("div",{style:{textAlign:"center",padding:"40px 20px",opacity:0.6}},
-    h("div",{style:{fontSize:40,marginBottom:12}},icon),
-    h("div",{style:{fontWeight:700,fontSize:16,marginBottom:6}},title),
-    h("div",{style:{fontSize:14,lineHeight:1.5}},subtitle)
-  );
+  return h("div",{className:"empty"},h("div",{className:"empty-icon","aria-hidden":"true"},icon),h("div",{className:"empty-title"},title),subtitle&&h("div",{className:"text-base lh-relaxed"},subtitle));
 }
 
-function ProgressRing({pct,size,stroke,color,label}){
-  size=size||80; stroke=stroke||6; color=color||"#3b82f6";
-  const r=(size-stroke)/2, circ=2*Math.PI*r, offset=circ-(Math.min(pct,100)/100)*circ;
-  return h("div",{style:{position:"relative",width:size,height:size}},
-    h("svg",{width:size,height:size,style:{transform:"rotate(-90deg)"}},
-      h("circle",{cx:size/2,cy:size/2,r:r,fill:"none",stroke:"rgba(255,255,255,0.06)",strokeWidth:stroke}),
-      h("circle",{cx:size/2,cy:size/2,r:r,fill:"none",stroke:color,strokeWidth:stroke,strokeDasharray:circ,strokeDashoffset:offset,strokeLinecap:"round",style:{transition:"stroke-dashoffset 0.6s ease"}})
-    ),
-    h("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
-      h("span",{style:{fontSize:size*0.22,fontWeight:800}},Math.round(pct)+"%"),
-      label && h("span",{style:{fontSize:size*0.12,opacity:0.6}},label)
-    )
-  );
+function ProgressRing({pct,size=80,stroke=6,color="#3b82f6",label}){
+  const r=(size-stroke)/2,circ=2*Math.PI*r,offset=circ-(Math.min(pct,100)/100)*circ;
+  return h("div",{style:{position:"relative",width:size,height:size},role:"progressbar","aria-valuenow":Math.round(pct),"aria-valuemin":"0","aria-valuemax":"100","aria-label":(label||"Progress")+": "+Math.round(pct)+"%"},
+    h("svg",{width:size,height:size,style:{transform:"rotate(-90deg)"},"aria-hidden":"true"},
+      h("circle",{cx:size/2,cy:size/2,r,fill:"none",stroke:"rgba(255,255,255,0.06)",strokeWidth:stroke}),
+      h("circle",{cx:size/2,cy:size/2,r,fill:"none",stroke:color,strokeWidth:stroke,strokeDasharray:circ,strokeDashoffset:offset,strokeLinecap:"round",style:{transition:"stroke-dashoffset 0.6s ease"}})),
+    h("div",{className:"flex flex-col items-center justify-center",style:{position:"absolute",inset:0}},
+      h("span",{style:{fontSize:size*.22},className:"fw-8"},Math.round(pct)+"%"),
+      label&&h("span",{style:{fontSize:size*.12},className:"o-60"},label)));
 }
 
 function WeekChart({activity}){
-  const days=[];
-  for(let i=6;i>=0;i--){ const dt=new Date(); dt.setHours(12,0,0,0); dt.setDate(dt.getDate()-i);
-    const key=dt.toLocaleDateString("en-CA");
-    const mins=activity.filter(e=>dayK(e.ts)===key).reduce((s,e)=>s+(Number(e.minutes)||0),0);
-    days.push({label:dt.toLocaleDateString(undefined,{weekday:"short"}),mins,key});
-  }
+  const days=[];for(let i=6;i>=0;i--){const dt=new Date();dt.setHours(12,0,0,0);dt.setDate(dt.getDate()-i);const key=dt.toLocaleDateString("en-CA");const mins=activity.filter(e=>dayK(e.ts)===key).reduce((s,e)=>s+(Number(e.minutes)||0),0);days.push({label:dt.toLocaleDateString(undefined,{weekday:"short"}),mins,key})}
   const max=Math.max(1,...days.map(d=>d.mins));
-  return h("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:80}},
-    days.map(d=>h("div",{key:d.key,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}},
-      h("span",{style:{fontSize:10,fontWeight:700,opacity:0.7}},d.mins>0?d.mins:""),
-      h("div",{style:{width:"100%",height:Math.max(4,(d.mins/max)*60),borderRadius:4,background:d.mins>0?"linear-gradient(to top,#3b82f6,#60a5fa)":"rgba(255,255,255,0.06)",transition:"height 0.4s ease"}}),
-      h("span",{style:{fontSize:10,opacity:0.5}},d.label)
-    ))
-  );
+  return h("div",{className:"wk-chart",role:"img","aria-label":"Weekly study minutes chart"},
+    days.map(d=>h("div",{key:d.key,className:"wk-col"},
+      h("span",{className:"text-xs fw-7 o-70"},d.mins>0?d.mins:""),
+      h("div",{className:"wk-bar",style:{height:Math.max(4,(d.mins/max)*60),background:d.mins>0?"linear-gradient(to top,#3b82f6,#60a5fa)":"var(--surface-2)"},"aria-label":d.label+": "+d.mins+" minutes"}),
+      h("span",{className:"text-xs o-50"},d.label))));
 }
 
-function Card({title,children,style:extra,actions}){
-  return h("div",{style:{...cardS,...extra}},
-    (title||actions) && h("div",{style:{display:"flex",alignItems:"center",marginBottom:12}},
-      title && h("h2",{style:{margin:0,fontSize:15,fontWeight:700,opacity:0.8}},title),
-      h("div",{style:{flex:1}}),
-      actions
-    ),
-    children
-  );
+function Card({title,children,className:extra,actions}){
+  return h("div",{className:cn("card",extra)},
+    (title||actions)&&h("div",{className:"card-header"},title&&h("h2",{className:"card-title"},title),h("div",{className:"flex-1"}),actions),children);
 }
 
 function StatCard({label,value,icon,accent}){
-  return h("div",{style:{...cardS,display:"flex",alignItems:"center",gap:12,flex:1,minWidth:140}},
-    h("div",{style:{width:42,height:42,borderRadius:12,background:accent+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}},icon),
-    h("div",null,
-      h("div",{style:{fontSize:12,opacity:0.5,fontWeight:600}},label),
-      h("div",{style:{fontSize:20,fontWeight:800}},value)
-    )
-  );
+  return h("div",{className:"card stat-card"},
+    h("div",{className:"stat-icon","aria-hidden":"true",style:{background:accent+"18"}},icon),
+    h("div",null,h("div",{className:"stat-label"},label),h("div",{className:"stat-value"},value)));
 }
 
-function QBtn({onClick,icon,label}){
-  return h("button",{onClick,style:{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",color:"#e9eefc",fontWeight:600,fontSize:13,cursor:"pointer"}},icon+" "+label);
+function Pill({label,value,color}){return h("span",{className:"pill",style:color?{color}:null},label+": "+value)}
+
+function Spinner({small}){return h("span",{className:cn("spinner",small&&"spinner-sm"),"aria-label":"Loading"})}
+
+/* ═══════════════════════════════════════════
+   AI TUTOR PANEL
+   ═══════════════════════════════════════════ */
+function AIPanel({open,onClose,context}){
+  const[msgs,setMsgs]=useState([{role:"system",content:"You are a helpful certification exam tutor. Be concise, accurate, and encouraging. When explaining concepts, use real-world analogies. Format answers clearly."}]);
+  const[input,setInput]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState("");
+  const scrollRef=useRef(null);
+  const inputRef=useRef(null);
+
+  useEffect(()=>{if(open&&inputRef.current)inputRef.current.focus()},[open]);
+  useEffect(()=>{scrollRef.current?.scrollTo(0,scrollRef.current.scrollHeight)},[msgs]);
+
+  const send=async(text)=>{
+    if(!text?.trim()||loading)return;
+    const userMsg={role:"user",content:text.trim()};
+    const newMsgs=[...msgs,userMsg];
+    setMsgs([...newMsgs,{role:"assistant",content:"",_loading:true}]);
+    setInput("");setLoading(true);setError("");
+    try{
+      const reply=await aiChat(newMsgs.filter(m=>!m._loading),(partial)=>{
+        setMsgs(prev=>[...prev.slice(0,-1),{role:"assistant",content:partial}]);
+      });
+      setMsgs(prev=>{const a=[...prev];a[a.length-1]={role:"assistant",content:reply};return a});
+    }catch(err){setError(err.message);setMsgs(prev=>prev.filter(m=>!m._loading))}
+    setLoading(false);
+  };
+
+  const explainCard=(q,a,why)=>{
+    send("I got this flashcard wrong and need help understanding it:\n\nQuestion: "+q+"\nCorrect Answer: "+a+(why?"\nExplanation: "+why:"")+"\n\nPlease explain this concept in more depth with an analogy and a memory trick.");
+  };
+
+  // Expose explainCard via ref-like pattern
+  useEffect(()=>{if(context?.explain){explainCard(context.explain.q,context.explain.a,context.explain.why)}},[context?.explain?.q]);
+
+  if(!open)return null;
+  const display=msgs.filter(m=>m.role!=="system");
+
+  return h("div",{className:"ai-drawer",role:"dialog","aria-label":"AI Tutor"},
+    h("div",{className:"ai-header"},
+      h("span",{style:{fontSize:22}},"🤖"),
+      h("div",{className:"flex-1"},h("div",{className:"fw-8 text-lg"},"AI Tutor"),h("div",{className:"text-xs o-50"},getAISettings().model+" @ "+getAISettings().endpoint.replace("http://",""))),
+      h("button",{onClick:onClose,className:"btn btn-ghost btn-sm","aria-label":"Close AI panel"},"✕")),
+    h("div",{ref:scrollRef,className:"ai-messages"},
+      display.length===0&&h("div",{className:"ai-msg ai-msg-sys"},"Ask me anything about your studies. I can explain concepts, quiz you, or help with flashcards."),
+      display.map((m,i)=>h("div",{key:i,className:cn("ai-msg",m.role==="user"?"ai-msg-user":"ai-msg-ai")},
+        m._loading?h(Spinner,{small:true}):h("div",{className:"pre-wrap"},m.content))),
+      error&&h("div",{className:"ai-msg ai-msg-sys",style:{color:"#ff6b6b",borderColor:"rgba(255,60,60,.2)"}},"\u26A0\uFE0F "+error)),
+    h("div",{className:"flex gap-8 mb-8",style:{padding:"0 16px",flexWrap:"wrap"}},
+      h("button",{onClick:()=>send("Quiz me on a random "+getSettings().currentCert+" topic. Ask one question and wait for my answer."),disabled:loading,className:"btn btn-cyan btn-sm"},"🎯 Quiz Me"),
+      h("button",{onClick:()=>send("Give me a quick summary of the most important concepts for the "+getSettings().currentCert+" certification exam."),disabled:loading,className:"btn btn-cyan btn-sm"},"📋 Key Concepts"),
+      h("button",{onClick:()=>{setMsgs([msgs[0]]);setError("")},className:"btn btn-ghost btn-sm"},"🗑 Clear")),
+    h("div",{className:"ai-input-row"},
+      h("textarea",{ref:inputRef,value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(input)}},placeholder:"Ask a question...",className:"ai-input",rows:1,"aria-label":"Message to AI tutor"}),
+      h("button",{onClick:()=>send(input),disabled:loading||!input.trim(),className:"ai-send","aria-label":"Send message"},"➤")));
 }
 
-function Pill({label,value,color}){
-  return h("span",{style:{fontSize:12,fontWeight:700,padding:"4px 10px",borderRadius:999,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",color:color||"#e9eefc"}},label+": "+value);
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  STUDY TIMER
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════
+   STUDY TIMER
+   ═══════════════════════════════════════════ */
 function StudyTimer({certId,onComplete}){
-  const [seconds,setSeconds]=useState(0);
-  const [running,setRunning]=useState(false);
+  const[seconds,setSeconds]=useState(0);
+  const[running,setRunning]=useState(false);
   const intervalRef=useRef(null);
+
   useEffect(()=>{
-    if(running) intervalRef.current=setInterval(()=>setSeconds(s=>s+1),1000);
+    if(running)intervalRef.current=setInterval(()=>setSeconds(s=>s+1),1000);
     else clearInterval(intervalRef.current);
-    return ()=>clearInterval(intervalRef.current);
+    return()=>clearInterval(intervalRef.current);
   },[running]);
-  const mins=Math.floor(seconds/60), secs=seconds%60;
-  const stop=()=>{ setRunning(false); if(mins>=1) onComplete(mins); setSeconds(0); };
-  return h("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
-    h("div",{style:{fontFamily:"ui-monospace, monospace",fontSize:22,fontWeight:800,minWidth:80,letterSpacing:1}},
+
+  // Warn before leaving while timer runs
+  useEffect(()=>{
+    if(!running)return;
+    const handler=e=>{e.preventDefault();e.returnValue=""};
+    window.addEventListener("beforeunload",handler);
+    return()=>window.removeEventListener("beforeunload",handler);
+  },[running]);
+
+  const mins=Math.floor(seconds/60),secs=seconds%60;
+  const stop=()=>{setRunning(false);if(mins>=1)onComplete(mins);setSeconds(0)};
+
+  return h("div",{className:"flex items-center gap-10 flex-wrap"},
+    h("div",{className:"mono fw-8",style:{fontSize:22,minWidth:80,letterSpacing:1},"aria-live":"polite","aria-label":"Timer: "+mins+" minutes "+secs+" seconds"},
       String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0")),
-    !running ? h("button",{onClick:()=>setRunning(true),style:btnS("#3b82f6")},"\u25B6 Start") :
-      h(React.Fragment,null,
-        h("button",{onClick:()=>setRunning(false),style:btnS("#f59e0b")},"\u23F8 Pause"),
-        h("button",{onClick:stop,style:btnS("#ef4444")},"\u23F9 Stop & Log")
-      ),
-    !running && seconds>0 && h(React.Fragment,null,
-      h("button",{onClick:stop,style:btnS("#22c55e")},"Save "+mins+"m"),
-      h("button",{onClick:()=>setSeconds(0),style:btnS("rgba(255,255,255,0.1)")},"Reset")
-    )
-  );
+    !running
+      ?h("button",{onClick:()=>setRunning(true),className:"btn btn-blue"},"▶ Start")
+      :h(React.Fragment,null,
+        h("button",{onClick:()=>setRunning(false),className:"btn btn-amber"},"⏸ Pause"),
+        h("button",{onClick:stop,className:"btn btn-red"},"⏹ Stop & Log")),
+    !running&&seconds>0&&h(React.Fragment,null,
+      h("button",{onClick:stop,className:"btn btn-green"},"Save "+mins+"m"),
+      h("button",{onClick:()=>setSeconds(0),className:"btn btn-ghost"},"Reset")));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  DASHBOARD
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function Dashboard({nav,toast}){
-  const activity=getActivity(), journal=getJournal(), todayKey=dayK(now());
-  const streak=streakFromActivity(activity);
-  const todayMin=activity.filter(e=>dayK(e.ts)===todayKey).reduce((s,e)=>s+(Number(e.minutes)||0),0);
-  const weekMin=activity.filter(e=>(Date.now()-new Date(e.ts).getTime())<=7*86400000).reduce((s,e)=>s+(Number(e.minutes)||0),0);
+/* ═══════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════ */
+function Dashboard({nav,toast,refreshTick}){
+  const activity=useMemo(getActivity,[refreshTick]);
+  const journal=useMemo(getJournal,[refreshTick]);
+  const todayKey=dayK(now());
+  const streak=useMemo(()=>streakFromActivity(activity),[activity]);
+  const todayMin=useMemo(()=>activity.filter(e=>dayK(e.ts)===todayKey).reduce((s,e)=>s+(Number(e.minutes)||0),0),[activity,todayKey]);
+  const weekMin=useMemo(()=>activity.filter(e=>(Date.now()-new Date(e.ts).getTime())<=7*86400000).reduce((s,e)=>s+(Number(e.minutes)||0),0),[activity]);
   const recent=activity.slice(0,8);
-  const certStats=Object.keys(CERTS).map(k=>{
-    const cert=getCert(k), objs=cert.objectives||[], done=objs.filter(o=>o.done).length;
-    return {...CERTS[k],total:objs.length,done,todayMin:activity.filter(e=>dayK(e.ts)===todayKey&&e.certId===k).reduce((s,e)=>s+(Number(e.minutes)||0),0)};
-  });
+  const certStats=useMemo(()=>Object.keys(CERTS).map(k=>{const cert=getCert(k),objs=cert.objectives||[],done=objs.filter(o=>o.done).length;return{...CERTS[k],total:objs.length,done,todayMin:activity.filter(e=>dayK(e.ts)===todayKey&&e.certId===k).reduce((s,e)=>s+(Number(e.minutes)||0),0)}}),[activity,todayKey,refreshTick]);
+
   return h("div",null,
-    h("div",{style:{marginBottom:24}},
-      h("h1",{style:{margin:0,fontSize:26,fontWeight:800}},"Study Hub ",h("span",{style:{fontSize:12,fontWeight:600,padding:"3px 8px",borderRadius:999,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",verticalAlign:"middle",opacity:0.5}},APP_VERSION)),
-      h("p",{style:{margin:"4px 0 0",opacity:0.6,fontSize:14}},streak>0?"\uD83D\uDD25 "+streak+"-day streak \u2014 keep it alive!":"Start your streak by logging some study time today.")
-    ),
-    // Stats
-    h("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
-      h(StatCard,{label:"Streak",value:streak+" days",icon:"\uD83D\uDD25",accent:"#f59e0b"}),
-      h(StatCard,{label:"Today",value:todayMin+" min",icon:"\u23F1\uFE0F",accent:"#3b82f6"}),
-      h(StatCard,{label:"This Week",value:weekMin+" min",icon:"\uD83D\uDCCA",accent:"#22c55e"}),
-      h(StatCard,{label:"Wrong Answers",value:journal.filter(e=>!e.archived).length,icon:"\uD83D\uDCD3",accent:"#ef4444"})
-    ),
-    // Week chart
-    h(Card,{title:"Weekly Activity",style:{marginBottom:16}},h(WeekChart,{activity})),
-    // Cert cards
-    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12,marginBottom:16}},
-      certStats.map(c=>h("div",{key:c.id,onClick:()=>nav("cert",c.id),style:{...cardS,cursor:"pointer",borderLeft:"3px solid "+c.color}},
-        h("div",{style:{display:"flex",alignItems:"center",gap:10}},
-          c.total>0 ? h(ProgressRing,{pct:(c.done/c.total)*100,size:56,stroke:5,color:c.color}) :
-            h("div",{style:{width:56,height:56,borderRadius:"50%",background:c.color+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}},c.emoji),
-          h("div",null,
-            h("div",{style:{fontWeight:800,fontSize:15}},c.emoji+" "+c.title),
-            h("div",{style:{opacity:0.6,fontSize:12,marginTop:2}},c.total>0?c.done+"/"+c.total+" objectives":"No objectives yet"),
-            c.todayMin>0 && h("div",{style:{fontSize:12,color:c.color,fontWeight:700,marginTop:2}},c.todayMin+" min today")
-          )
-        )
-      ))
-    ),
-    // Quick actions
-    h(Card,{title:"Quick Actions",style:{marginBottom:16}},
-      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-        h(QBtn,{onClick:()=>nav("cards"),icon:"\uD83C\uDCCF",label:"Study Cards"}),
-        h(QBtn,{onClick:()=>nav("vlog"),icon:"\uD83D\uDCDD",label:"Log Study Time"}),
-        h(QBtn,{onClick:()=>nav("journal"),icon:"\uD83D\uDCD3",label:"Review Mistakes"}),
-        Object.values(CERTS).map(c=>h(QBtn,{key:c.id,onClick:()=>nav("cert",c.id),icon:c.emoji,label:c.title+" Notes"}))
-      )
-    ),
-    // Recent
+    h("div",{className:"mb-24"},
+      h("h1",{className:"fw-8 text-4xl"},"Study Hub ",h("span",{className:"pill o-50",style:{verticalAlign:"middle"}},APP_VERSION)),
+      h("p",{className:"text-base o-60 mt-6"},streak>0?"🔥 "+streak+"-day streak — keep it alive!":"Start your streak by logging some study time today.")),
+    h("div",{className:"stats-row mb-16"},
+      h(StatCard,{label:"Streak",value:streak+" days",icon:"🔥",accent:"#f59e0b"}),
+      h(StatCard,{label:"Today",value:todayMin+" min",icon:"⏱️",accent:"#3b82f6"}),
+      h(StatCard,{label:"This Week",value:weekMin+" min",icon:"📊",accent:"#22c55e"}),
+      h(StatCard,{label:"Wrong Answers",value:journal.filter(e=>!e.archived).length,icon:"📓",accent:"#ef4444"})),
+    h(Card,{title:"Weekly Activity",className:"mb-16"},h(WeekChart,{activity})),
+    h("div",{className:"grid-auto mb-16"},
+      certStats.map(c=>h("div",{key:c.id,onClick:()=>nav("cert",c.id),className:"card cert-card",style:{borderLeftColor:c.color},role:"button",tabIndex:0,"aria-label":"Open "+c.title,onKeyDown:e=>{if(e.key==="Enter")nav("cert",c.id)}},
+        h("div",{className:"flex items-center gap-10"},
+          c.total>0?h(ProgressRing,{pct:(c.done/c.total)*100,size:56,stroke:5,color:c.color}):h("div",{className:"cert-icon",style:{background:c.color+"15"}},c.emoji),
+          h("div",null,h("div",{className:"fw-8 text-lg"},c.emoji+" "+c.title),
+            h("div",{className:"o-60 text-sm mt-4"},c.total>0?c.done+"/"+c.total+" objectives":"No objectives yet"),
+            c.todayMin>0&&h("div",{className:"text-sm fw-7 mt-4",style:{color:c.color}},c.todayMin+" min today")))))),
+    h(Card,{title:"Quick Actions",className:"mb-16"},
+      h("div",{className:"flex gap-8 flex-wrap"},
+        h("button",{onClick:()=>nav("cards"),className:"qbtn"},"🃏 Study Cards"),
+        h("button",{onClick:()=>nav("vlog"),className:"qbtn"},"📝 Log Study Time"),
+        h("button",{onClick:()=>nav("journal"),className:"qbtn"},"📓 Review Mistakes"),
+        Object.values(CERTS).map(c=>h("button",{key:c.id,onClick:()=>nav("cert",c.id),className:"qbtn"},c.emoji+" "+c.title+" Notes")))),
     h(Card,{title:"Recent Activity"},
-      recent.length===0 ? h(EmptyState,{icon:"\uD83D\uDCED",title:"No activity yet",subtitle:"Head to the Vlog tab to log your first study session"}) :
-        h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-          recent.map(e=>h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",flexWrap:"wrap"}},
-            h(CertBadge,{certId:e.certId}),
-            h("span",{style:{fontWeight:600,fontSize:14}},e.title||e.type),
-            e.minutes>0 && h("span",{style:{fontSize:12,opacity:0.6}},e.minutes+" min"),
-            h("span",{style:{marginLeft:"auto",fontSize:12,opacity:0.4,fontFamily:"monospace"}},fmtTs(e.ts))
-          ))
-        )
-    )
-  );
+      recent.length===0?h(EmptyState,{icon:"📭",title:"No activity yet",subtitle:"Head to the Vlog tab to log your first study session"}):
+      h("div",{className:"flex-col gap-8"},recent.map(e=>h("div",{key:e.id,className:"activity-item"},
+        h(CertBadge,{certId:e.certId}),h("span",{className:"fw-6 text-base"},e.title||e.type),
+        e.minutes>0&&h("span",{className:"text-sm o-60"},e.minutes+" min"),
+        h("span",{className:"ml-auto ts"},fmtTs(e.ts)))))));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  CARDS PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function CardsPage({toast:showToast}){
-  const [deck,setDeck]=useState([]);
-  const [queue,setQueue]=useState([]);
-  const [current,setCurrent]=useState(null);
-  const [flipped,setFlipped]=useState(false);
-  const [graded,setGraded]=useState(false);
-  const [certId,setCertId]=useState(getSettings().currentCert||"netplus");
-  const [deckLabel,setDeckLabel]=useState("");
-  const [reqMode,setReqMode]=useState("smart");
-  const [session,setSession]=useState({correct:0,wrong:0,skip:0,start:0});
+/* ═══════════════════════════════════════════
+   DECK BROWSER (cert catalog + AI generation)
+   ═══════════════════════════════════════════ */
+function DeckBrowser({onLoadDeck,toast}){
+  const[generating,setGenerating]=useState(null);
+  const saved=getSavedDecks();
+
+  const handleGenerate=async(cert,domain)=>{
+    const key=cert.id+"_"+domain.id;
+    setGenerating(key);
+    try{
+      toast("🤖 AI is generating "+domain.name+" cards... this takes 30-60s","info");
+      const cards=await aiGenerateDeck(cert.name+(cert.exam?" ("+cert.exam+")":""),domain.name,15);
+      if(!cards.length)throw new Error("AI returned no valid cards");
+      // Save to localStorage
+      const decks=getSavedDecks();decks[key]={certId:cert.id,certName:cert.name,domainId:domain.id,domainName:domain.name,cards,generatedAt:now()};saveSavedDecks(decks);
+      toast("✅ Generated "+cards.length+" cards for "+domain.name,"success");
+      onLoadDeck(cards,cert.name+" — "+domain.name);
+    }catch(err){toast("❌ Generation failed: "+err.message,"error")}
+    setGenerating(null);
+  };
+
+  const handleLoad=(key)=>{
+    const deck=saved[key];
+    if(!deck?.cards?.length)return;
+    onLoadDeck(deck.cards.map(c=>({...c,seen:0,correct:0,wrong:0})),deck.certName+" — "+deck.domainName);
+  };
+
+  return h("div",null,
+    h("div",{className:"flex items-center gap-10 mb-16 flex-wrap"},
+      h("h2",{className:"fw-8 text-xl"},"📚 Deck Browser"),
+      h("span",{className:"text-sm o-50"},"Pick a domain → Load saved deck or generate with AI")),
+    CATALOG.map(cert=>h("div",{key:cert.id,className:"deck-cert-group"},
+      h("div",{className:"deck-cert-label"},cert.name+(cert.exam?" ("+cert.exam+")":"")),
+      h("div",{className:"deck-browser"},
+        cert.domains.map(domain=>{
+          const key=cert.id+"_"+domain.id;
+          const hasSaved=!!saved[key];
+          const isGen=generating===key;
+          return h("div",{key:domain.id,className:"deck-domain"},
+            h("div",{className:"deck-domain-title"},domain.name),
+            hasSaved&&h("div",{className:"deck-domain-meta"},"💾 "+saved[key].cards.length+" cards saved"),
+            h("div",{className:"flex gap-6 mt-8 flex-wrap"},
+              hasSaved&&h("button",{onClick:()=>handleLoad(key),className:"btn btn-green btn-sm"},"▶ Load"),
+              h("button",{onClick:()=>handleGenerate(cert,domain),disabled:!!generating,className:"btn btn-cyan btn-sm"},
+                isGen?h(React.Fragment,null,h(Spinner,{small:true})," Generating..."):("🤖 "+(hasSaved?"Regenerate":"Generate")))));
+        })))));
+}
+
+/* ═══════════════════════════════════════════
+   CARDS PAGE
+   ═══════════════════════════════════════════ */
+function CardsPage({toast:showToast,onExplain}){
+  const[deck,setDeck]=useState([]);
+  const[queue,setQueue]=useState([]);
+  const[current,setCurrent]=useState(null);
+  const[flipped,setFlipped]=useState(false);
+  const[graded,setGraded]=useState(false);
+  const[certId,setCertId]=useState(getSettings().currentCert||"netplus");
+  const[deckLabel,setDeckLabel]=useState("");
+  const[reqMode,setReqMode]=useState("smart");
+  const[session,setSession]=useState({correct:0,wrong:0,skip:0,start:0});
+  const[showBrowser,setShowBrowser]=useState(false);
+  const[confirmEnd,setConfirmEnd]=useState(false);
   const fileRef=useRef(null);
 
   const stats=useMemo(()=>({total:deck.length,seen:deck.reduce((s,c)=>s+(c.seen||0),0),correct:deck.reduce((s,c)=>s+(c.correct||0),0),wrong:deck.reduce((s,c)=>s+(c.wrong||0),0),queued:queue.length}),[deck,queue]);
 
   const loadDk=useCallback((cards,label)=>{
-    if(!cards.length){showToast("No valid cards found. Each needs Q: and A:","error");return;}
+    if(!cards.length){showToast("No valid cards found","error");return}
     const q=shuffle(cards.map((_,i)=>i));
     setDeck(cards);setQueue(q.slice(1));setCurrent(q[0]);setDeckLabel(label);setFlipped(false);setGraded(false);
-    setSession({correct:0,wrong:0,skip:0,start:Date.now()});
-    showToast("Loaded \""+label+"\" \u2014 "+cards.length+" cards","success");
+    setSession({correct:0,wrong:0,skip:0,start:Date.now()});setShowBrowser(false);
+    showToast("Loaded \""+label+"\" — "+cards.length+" cards","success");
   },[showToast]);
 
   const doGrade=useCallback(outcome=>{
-    if(current===null||graded) return;
-    const d=[...deck]; const c={...d[current]};
-    c.seen=(c.seen||0)+1;
-    if(outcome==="correct") c.correct=(c.correct||0)+1;
-    if(outcome==="wrong") c.wrong=(c.wrong||0)+1;
-    d[current]=c; setDeck(d);
+    if(current===null||graded)return;
+    const d=[...deck];const c={...d[current]};c.seen=(c.seen||0)+1;
+    if(outcome==="correct")c.correct=(c.correct||0)+1;
+    if(outcome==="wrong")c.wrong=(c.wrong||0)+1;
+    d[current]=c;setDeck(d);
     const q=[...queue];
-    if(reqMode==="smart"&&outcome==="wrong") q.splice(Math.min(q.length,2+Math.floor(Math.random()*4)),0,current);
+    if(reqMode==="smart"&&outcome==="wrong")q.splice(Math.min(q.length,2+Math.floor(Math.random()*4)),0,current);
     else q.push(current);
-    setQueue(q); setFlipped(true); setGraded(true);
+    setQueue(q);setFlipped(true);setGraded(true);
     setSession(s=>({...s,[outcome]:s[outcome]+1}));
-    if(outcome==="wrong"){ addJournalEntry({certId,deckLabel,q:c.q,a:c.a,why:c.why}); showToast("\u274C Missed \u2014 logged to Journal. Read WHY, then Next \u2192","error"); }
-    else if(outcome==="correct") showToast("\u2705 Nailed it! Read WHY to reinforce, then Next \u2192","success");
+    if(outcome==="wrong"){addJournalEntry({certId,deckLabel,q:c.q,a:c.a,why:c.why});showToast("❌ Missed — logged to Journal","error")}
+    else if(outcome==="correct")showToast("✅ Correct!","success");
   },[current,graded,deck,queue,reqMode,certId,deckLabel,showToast]);
 
   const doNext=useCallback(()=>{
-    if(!queue.length){ showToast("Deck complete! \uD83C\uDF89 Reshuffling...","success"); const q=shuffle(deck.map((_,i)=>i)); setQueue(q.slice(1));setCurrent(q[0]);setFlipped(false);setGraded(false);return; }
-    const q=[...queue]; const next=q.shift(); setQueue(q);setCurrent(next);setFlipped(false);setGraded(false);
+    if(!queue.length){showToast("Deck complete! 🎉 Reshuffling...","success");const q=shuffle(deck.map((_,i)=>i));setQueue(q.slice(1));setCurrent(q[0]);setFlipped(false);setGraded(false);return}
+    const q=[...queue];setCurrent(q.shift());setQueue(q);setFlipped(false);setGraded(false);
   },[queue,deck,showToast]);
 
   const endSess=useCallback(()=>{
     const mins=Math.max(1,Math.round((Date.now()-session.start)/60000));
-    addActivity({certId,type:"cards_session",minutes:mins,title:"Cards: "+deckLabel,details:"\u2705 "+session.correct+"  \u274C "+session.wrong+"  \u23ED "+session.skip});
+    addActivity({certId,type:"cards_session",minutes:mins,title:"Cards: "+deckLabel,details:"✅ "+session.correct+"  ❌ "+session.wrong+"  ⏭ "+session.skip});
     setDeck([]);setQueue([]);setCurrent(null);setFlipped(false);setGraded(false);
     showToast("Session logged: "+mins+" min, "+session.correct+" correct, "+session.wrong+" wrong","success");
   },[session,certId,deckLabel,showToast]);
 
   useEffect(()=>{
     const handler=e=>{
-      if(!deck.length) return;
-      if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT") return;
-      if(e.code==="Space"){e.preventDefault();setFlipped(f=>!f);}
-      if(e.key==="c"||e.key==="C"){e.preventDefault();doGrade("correct");}
-      if(e.key==="w"||e.key==="W"){e.preventDefault();doGrade("wrong");}
-      if(e.key==="n"||e.key==="N"){e.preventDefault();if(graded) doNext(); else doGrade("skip");}
+      if(!deck.length||["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName))return;
+      if(e.code==="Space"){e.preventDefault();setFlipped(f=>!f)}
+      if(e.key==="c"||e.key==="C"){e.preventDefault();doGrade("correct")}
+      if(e.key==="w"||e.key==="W"){e.preventDefault();doGrade("wrong")}
+      if(e.key==="n"||e.key==="N"){e.preventDefault();graded?doNext():doGrade("skip")}
     };
-    window.addEventListener("keydown",handler);
-    return ()=>window.removeEventListener("keydown",handler);
+    window.addEventListener("keydown",handler);return()=>window.removeEventListener("keydown",handler);
   },[deck,graded,doGrade,doNext]);
 
-  const handleFile=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    try{ const text=await f.text(); loadDk(parseDeck(text),f.name.replace(/\.(txt|json)$/i,"")); }
-    catch(err){ showToast("Failed to load: "+err.message,"error"); }
-    e.target.value="";
-  };
+  const handleFile=async e=>{const f=e.target.files?.[0];if(!f)return;try{loadDk(parseDeck(await f.text()),f.name.replace(/\.(txt|json)$/i,""))}catch(err){showToast("Failed: "+err.message,"error")}e.target.value=""};
+
+  const curCard=current!==null?deck[current]:null;
 
   return h("div",null,
-    h("h1",{style:{margin:"0 0 16px",fontSize:24,fontWeight:800}},"\uD83C\uDCCF Flashcards"),
+    h("h1",{className:"fw-8 text-3xl mb-16"},"🃏 Flashcards"),
     // Controls
-    h(Card,{style:{marginBottom:16}},
-      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}},
-        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600}},"Cert: ",
-          h("select",{value:certId,onChange:e=>{setCertId(e.target.value);const s=getSettings();s.currentCert=e.target.value;saveSettings(s);},style:selS},
+    h(Card,{className:"mb-16"},
+      h("div",{className:"flex gap-10 flex-wrap items-center"},
+        h("label",{className:"flex items-center gap-6 text-sm fw-6"},"Cert: ",
+          h("select",{value:certId,onChange:e=>{setCertId(e.target.value);const s=getSettings();s.currentCert=e.target.value;saveSettings(s)},className:"sel","aria-label":"Select certification"},
             Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.emoji+" "+c.title)))),
-        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600}},"Requeue: ",
-          h("select",{value:reqMode,onChange:e=>setReqMode(e.target.value),style:selS},
+        h("label",{className:"flex items-center gap-6 text-sm fw-6"},"Requeue: ",
+          h("select",{value:reqMode,onChange:e=>setReqMode(e.target.value),className:"sel","aria-label":"Requeue mode"},
             h("option",{value:"smart"},"Smart (wrong = sooner)"),h("option",{value:"back"},"Back of deck"))),
-        h("div",{style:{flex:1}}),
-        h("button",{onClick:()=>fileRef.current?.click(),style:btnS("#3b82f6")},"\uD83D\uDCC2 Load Deck"),
-        h("input",{ref:fileRef,type:"file",accept:".txt,.json",onChange:handleFile,style:{display:"none"}}),
-        deck.length>0 && h("button",{onClick:endSess,style:btnS("#ef4444")},"\u23F9 End Session")
-      ),
-      deck.length>0 && h("div",{style:{display:"flex",gap:12,marginTop:12,flexWrap:"wrap"}},
-        h(Pill,{label:"Deck",value:deck.length+" cards"}),h(Pill,{label:"Seen",value:stats.seen}),
-        h(Pill,{label:"Correct",value:stats.correct,color:"#22c55e"}),h(Pill,{label:"Wrong",value:stats.wrong,color:"#ef4444"}),
-        h(Pill,{label:"Queue",value:stats.queued})
-      )
-    ),
+        h("div",{className:"flex-1"}),
+        h("button",{onClick:()=>setShowBrowser(b=>!b),className:"btn btn-cyan"},showBrowser?"✕ Close Browser":"📚 Deck Browser"),
+        h("button",{onClick:()=>fileRef.current?.click(),className:"btn btn-blue"},"📂 Load File"),
+        h("input",{ref:fileRef,type:"file",accept:".txt,.json",onChange:handleFile,className:"hidden","aria-label":"Import flashcard file"}),
+        deck.length>0&&h("button",{onClick:()=>setConfirmEnd(true),className:"btn btn-red"},"⏹ End Session")),
+      deck.length>0&&h("div",{className:"flex gap-12 mt-12 flex-wrap"},
+        h(Pill,{label:"Deck",value:deck.length+" cards"}),h(Pill,{label:"✅",value:stats.correct,color:"#22c55e"}),
+        h(Pill,{label:"❌",value:stats.wrong,color:"#ef4444"}),h(Pill,{label:"Queue",value:stats.queued}))),
+
+    // Deck browser
+    showBrowser&&!deck.length&&h(Card,{className:"mb-16"},h(DeckBrowser,{onLoadDeck:loadDk,toast:showToast})),
+
     // Card or empty
-    deck.length===0 ?
-      h(Card,null,
-        h(EmptyState,{icon:"\uD83C\uDCCF",title:"No deck loaded",subtitle:"Click 'Load Deck' above to import a .txt or .json flashcard file"}),
-        h("div",{style:{marginTop:16,padding:14,borderRadius:12,background:"rgba(255,255,255,0.03)",fontSize:13,lineHeight:1.6,opacity:0.7}},
-          h("strong",null,"Deck format (.txt):"),h("br"),
-          "---",h("br"),"Q: Your question here",h("br"),"A: The answer",h("br"),"WHY: Explanation of why this is correct",h("br"),"---")
-      ) :
-    current!==null && deck[current] && h(React.Fragment,null,
-      // Flip card
-      h("div",{onClick:()=>setFlipped(f=>!f),style:{perspective:1200,cursor:"pointer",marginBottom:12}},
-        h("div",{className:"card-flip"+(flipped?" flipped":""),style:{position:"relative",minHeight:340,borderRadius:20,boxShadow:"0 12px 40px rgba(0,0,0,0.35)"}},
-          // Front
-          h("div",{className:"card-face",style:{background:"linear-gradient(135deg,rgba(59,130,246,0.08),rgba(30,58,95,0.15))",border:"1px solid rgba(255,255,255,0.08)"}},
-            h("div",{style:{fontSize:11,fontWeight:700,opacity:0.5,letterSpacing:2,textTransform:"uppercase",marginBottom:12}},"QUESTION"),
-            h("div",{style:{fontSize:20,fontWeight:700,lineHeight:1.45,whiteSpace:"pre-wrap",flex:1}},deck[current].q),
-            h("div",{style:{fontSize:12,opacity:0.4,marginTop:"auto"}},"Click or press Space to flip")
-          ),
-          // Back
-          h("div",{className:"card-face card-back",style:{background:"linear-gradient(135deg,rgba(34,197,94,0.06),rgba(20,60,40,0.12))",border:"1px solid rgba(255,255,255,0.08)",overflow:"auto"}},
-            h("div",{style:{fontSize:11,fontWeight:700,opacity:0.5,letterSpacing:2,textTransform:"uppercase",marginBottom:8}},"ANSWER"),
-            h("div",{style:{fontSize:18,fontWeight:700,lineHeight:1.45,whiteSpace:"pre-wrap"}},deck[current].a),
-            deck[current].why && h(React.Fragment,null,
-              h("div",{style:{height:1,background:"rgba(255,255,255,0.08)",margin:"16px 0"}}),
-              h("div",{style:{fontSize:11,fontWeight:700,opacity:0.5,letterSpacing:2,textTransform:"uppercase",marginBottom:8}},"WHY"),
-              h("div",{style:{fontSize:14,lineHeight:1.6,opacity:0.85,whiteSpace:"pre-wrap"}},deck[current].why)
-            )
-          )
-        )
-      ),
+    !deck.length&&!showBrowser?h(Card,null,
+      h(EmptyState,{icon:"🃏",title:"No deck loaded",subtitle:"Use the Deck Browser to generate cards with AI, or import a .txt/.json file"}),
+      h("div",{className:"mt-16 p-12 r-10 surface-s text-sm lh-relaxed o-70"},
+        h("strong",null,"File format (.txt):")," --- / Q: / A: / WHY: / ---")):
+    curCard&&h(React.Fragment,null,
+      h("div",{onClick:()=>setFlipped(f=>!f),className:"pointer mb-12",style:{perspective:1200},role:"button","aria-label":"Flashcard. Click to flip."},
+        h("div",{className:cn("card-flip",flipped&&"flipped"),style:{position:"relative",minHeight:300,borderRadius:20,boxShadow:"0 12px 40px rgba(0,0,0,.35)"}},
+          h("div",{className:"card-face face-front"},
+            h("div",{className:"section-label mb-12"},"QUESTION"),
+            h("div",{className:"text-2xl fw-7 lh-snug pre-wrap flex-1"},curCard.q),
+            h("div",{className:"text-sm o-40 mt-auto"},"Click or Space to flip")),
+          h("div",{className:"card-face card-back face-back"},
+            h("div",{className:"section-label"},"ANSWER"),
+            h("div",{className:"text-xl fw-7 lh-snug pre-wrap"},curCard.a),
+            curCard.why&&h(React.Fragment,null,
+              h("div",{style:{height:1,background:"var(--surface-3)",margin:"16px 0"}}),
+              h("div",{className:"section-label"},"WHY"),
+              h("div",{className:"text-base lh-relaxed o-85 pre-wrap"},curCard.why))))),
       // Grade buttons
-      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-        h("button",{onClick:()=>doGrade("correct"),disabled:graded,style:{...gradeBtnS,background:graded?"rgba(255,255,255,0.04)":"rgba(34,197,94,0.15)",borderColor:graded?"rgba(255,255,255,0.06)":"rgba(34,197,94,0.3)",opacity:graded?0.4:1}},
-          "\u2705 Correct ",h("kbd",{style:kbdS},"C")),
-        h("button",{onClick:()=>doGrade("wrong"),disabled:graded,style:{...gradeBtnS,background:graded?"rgba(255,255,255,0.04)":"rgba(239,68,68,0.15)",borderColor:graded?"rgba(255,255,255,0.06)":"rgba(239,68,68,0.3)",opacity:graded?0.4:1}},
-          "\u274C Wrong ",h("kbd",{style:kbdS},"W")),
-        h("button",{onClick:()=>{if(graded) doNext(); else doGrade("skip");},style:{...gradeBtnS,background:"rgba(100,180,255,0.12)",borderColor:"rgba(100,180,255,0.25)"}},
-          graded?"\u23ED Next Card":"\u23ED Skip"," ",h("kbd",{style:kbdS},"N"))
-      )
-    )
-  );
+      h("div",{className:"flex gap-10 flex-wrap mb-12"},
+        h("button",{onClick:()=>doGrade("correct"),disabled:graded,className:cn("grade-btn",graded?"btn-ghost":"grade-correct"),"aria-label":"Mark correct"},"✅ Correct ",h("kbd",{className:"kbd"},"C")),
+        h("button",{onClick:()=>doGrade("wrong"),disabled:graded,className:cn("grade-btn",graded?"btn-ghost":"grade-wrong"),"aria-label":"Mark wrong"},"❌ Wrong ",h("kbd",{className:"kbd"},"W")),
+        h("button",{onClick:()=>graded?doNext():doGrade("skip"),className:"grade-btn grade-skip","aria-label":graded?"Next card":"Skip"},graded?"⏭ Next":"⏭ Skip"," ",h("kbd",{className:"kbd"},"N"))),
+      // Explain button
+      graded&&curCard&&h("div",{className:"flex gap-8 mb-12"},
+        h("button",{onClick:()=>onExplain?.({q:curCard.q,a:curCard.a,why:curCard.why}),className:"btn btn-cyan"},"🤖 Ask AI to Explain This")),
+      // Shortcuts
+      h("div",{className:"shortcut-bar"},
+        h("span",null,h("kbd",{className:"kbd"},"Space")," Flip"),
+        h("span",null,h("kbd",{className:"kbd"},"C")," Correct"),
+        h("span",null,h("kbd",{className:"kbd"},"W")," Wrong"),
+        h("span",null,h("kbd",{className:"kbd"},"N")," Next/Skip"))),
+
+    // Confirm end session
+    h(ConfirmDialog,{open:confirmEnd,title:"End Study Session?",message:"This will log your session ("+session.correct+" correct, "+session.wrong+" wrong) and close the deck. You can reload it later.",onConfirm:()=>{endSess();setConfirmEnd(false)},onCancel:()=>setConfirmEnd(false)}));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  VLOG PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function VlogPage({toast:showToast,refresh}){
-  const [activity,setAct]=useState(getActivity());
-  const [certId,setCertId]=useState(getSettings().currentCert||"netplus");
-  const [type,setType]=useState("accountability");
-  const [title,setTitle]=useState("");
-  const [details,setDetails]=useState("");
-  const [minutes,setMinutes]=useState("");
-  const [search,setSearch]=useState("");
-  const [filterCert,setFilterCert]=useState("all");
-  const [confirm,setConfirm]=useState(null);
+/* ═══════════════════════════════════════════
+   VLOG PAGE
+   ═══════════════════════════════════════════ */
+function VlogPage({toast:showToast,refresh,refreshTick}){
+  const[activity,setAct]=useState(getActivity());
+  const[certId,setCertId]=useState(getSettings().currentCert||"netplus");
+  const[type,setType]=useState("accountability");
+  const[title,setTitle]=useState("");const[details,setDetails]=useState("");const[minutes,setMinutes]=useState("");
+  const[search,setSearch]=useState("");const[filterCert,setFilterCert]=useState("all");
+  const[confirm,setConfirm]=useState(null);const[limit,setLimit]=useState(30);
   const todayKey=dayK(now());
-  const reload=()=>{setAct(getActivity());refresh?.();};
-  const handleAdd=()=>{
-    if(!title&&!details&&!minutes){showToast("Need at least a title, details, or minutes","error");return;}
-    addActivity({certId,type,minutes:Number(minutes||0),title,details});
-    const s=getSettings();s.currentCert=certId;saveSettings(s);
-    setTitle("");setDetails("");setMinutes("");showToast("\uD83D\uDCDD Logged!","success");reload();
-  };
-  const handleTimerDone=mins=>{
-    addActivity({certId,type:"timed_session",minutes:mins,title:title||"Timed study session",details:details||""});
-    showToast("\u23F1\uFE0F "+mins+" minutes logged!","success");reload();
-  };
-  const handleDelete=id=>{saveActivity(activity.filter(e=>e.id!==id));showToast("Deleted","success");reload();};
-  const filtered=activity.filter(e=>{
-    if(filterCert!=="all"&&e.certId!==filterCert) return false;
-    if(search){const hay=(e.title+" "+e.details+" "+e.type).toLowerCase();if(!hay.includes(search.toLowerCase())) return false;}
-    return true;
-  });
-  const streak=streakFromActivity(activity);
-  const todayMin=activity.filter(e=>dayK(e.ts)===todayKey).reduce((s,e)=>s+(Number(e.minutes)||0),0);
+  const reload=()=>{setAct(getActivity());refresh?.()};
+  useEffect(()=>{reload();},[refreshTick]);
+  const handleAdd=()=>{if(!title&&!details&&!minutes){showToast("Need at least a title, details, or minutes","error");return}addActivity({certId,type,minutes:Number(minutes||0),title,details});const s=getSettings();s.currentCert=certId;saveSettings(s);setTitle("");setDetails("");setMinutes("");showToast("📝 Logged!","success");reload()};
+  const handleTimerDone=mins=>{addActivity({certId,type:"timed_session",minutes:mins,title:title||"Timed study session",details:details||""});showToast("⏱️ "+mins+" minutes logged!","success");reload()};
+  const handleDelete=id=>{saveActivity(activity.filter(e=>e.id!==id));showToast("Deleted","success");reload()};
+  const filtered=useMemo(()=>activity.filter(e=>{if(filterCert!=="all"&&e.certId!==filterCert)return false;if(search&&!(e.title+" "+e.details+" "+e.type).toLowerCase().includes(search.toLowerCase()))return false;return true}),[activity,filterCert,search]);
+  const streak=useMemo(()=>streakFromActivity(activity),[activity]);
+  const todayMin=useMemo(()=>activity.filter(e=>dayK(e.ts)===todayKey).reduce((s,e)=>s+(Number(e.minutes)||0),0),[activity,todayKey]);
+
+  // Group by date
+  const grouped=useMemo(()=>{const items=filtered.slice(0,limit);const groups=[];let lastDay="";
+    items.forEach(e=>{const d=dayK(e.ts);if(d!==lastDay){groups.push({type:"date",day:d,label:fmtDay(e.ts)});lastDay=d}groups.push({type:"item",entry:e})});return groups},[filtered,limit]);
 
   return h("div",null,
-    h("h1",{style:{margin:"0 0 4px",fontSize:24,fontWeight:800}},"\uD83D\uDCDD Accountability Log"),
-    h("p",{style:{margin:"0 0 16px",opacity:0.5,fontSize:14}},"Log everything: reading, labs, videos, practice tests, troubleshooting. Every entry keeps the streak alive."),
-    h("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
-      h(StatCard,{label:"Streak",value:streak+" days",icon:"\uD83D\uDD25",accent:"#f59e0b"}),
-      h(StatCard,{label:"Today",value:todayMin+" min",icon:"\u23F1\uFE0F",accent:"#3b82f6"})
-    ),
-    // Timer
-    h(Card,{title:"\u23F1\uFE0F Study Timer",style:{marginBottom:16}},
-      h(StudyTimer,{certId,onComplete:handleTimerDone}),
-      h("div",{style:{fontSize:12,opacity:0.5,marginTop:8}},"Start the timer, study, then stop to auto-log the time.")
-    ),
-    // Add entry
-    h(Card,{title:"Add Entry",style:{marginBottom:16}},
-      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}},
-        h("select",{value:certId,onChange:e=>setCertId(e.target.value),style:selS},
-          Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.emoji+" "+c.title))),
-        h("select",{value:type,onChange:e=>setType(e.target.value),style:selS},
-          h("option",{value:"accountability"},"\uD83D\uDCD6 Study"),h("option",{value:"lab"},"\uD83E\uDDEA Lab"),
-          h("option",{value:"video"},"\uD83C\uDFA5 Video"),h("option",{value:"practice_test"},"\uD83D\uDCDD Practice Test"),
-          h("option",{value:"review"},"\uD83D\uDD04 Review")),
-        h("input",{type:"number",min:"0",value:minutes,onChange:e=>setMinutes(e.target.value),placeholder:"Minutes",style:{...selS,width:90}})
-      ),
-      h("input",{type:"text",value:title,onChange:e=>setTitle(e.target.value),placeholder:"What did you study? (e.g., Subnetting, TLS handshake)",style:{...selS,width:"100%",marginBottom:8}}),
-      h("input",{type:"text",value:details,onChange:e=>setDetails(e.target.value),placeholder:"Details or notes (optional)",style:{...selS,width:"100%",marginBottom:10},onKeyDown:e=>{if(e.key==="Enter") handleAdd();}}),
-      h("button",{onClick:handleAdd,style:btnS("#3b82f6")},"+ Add Entry")
-    ),
-    // Feed
-    h(Card,{title:"Activity Feed",actions:h("button",{onClick:()=>setConfirm({action:()=>{saveActivity([]);reload();showToast("Activity cleared","success");},title:"Clear All Activity?",msg:"This permanently deletes all activity log entries."}),style:{...btnS("rgba(255,255,255,0.06)"),fontSize:12}},"Clear All")},
-      h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-        h("input",{type:"text",value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search...",style:{...selS,flex:1}}),
-        h("select",{value:filterCert,onChange:e=>setFilterCert(e.target.value),style:selS},
-          h("option",{value:"all"},"All Certs"),
-          Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.title)))
-      ),
-      filtered.length===0 ? h(EmptyState,{icon:"\uD83D\uDCED",title:"No entries yet",subtitle:"Log your first study session above"}) :
-        h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-          filtered.slice(0,50).map(e=>h("div",{key:e.id,style:{padding:12,borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)"}},
-            h("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
-              h(CertBadge,{certId:e.certId}),
-              h("span",{style:{fontWeight:700,fontSize:14}},e.title||e.type),
-              e.minutes>0 && h("span",{style:{fontSize:12,padding:"2px 8px",borderRadius:999,background:"rgba(59,130,246,0.15)",color:"#60a5fa",fontWeight:700}},e.minutes+" min"),
-              h("span",{style:{marginLeft:"auto",fontSize:11,opacity:0.4,fontFamily:"monospace"}},fmtTs(e.ts)),
-              h("button",{onClick:()=>handleDelete(e.id),style:{padding:"4px 10px",borderRadius:8,background:"rgba(255,60,60,0.1)",border:"1px solid rgba(255,60,60,0.15)",color:"#ff6b6b",fontWeight:600,fontSize:11,cursor:"pointer"}},"\u2715")
-            ),
-            e.details && h("div",{style:{marginTop:6,fontSize:13,opacity:0.7,lineHeight:1.5}},e.details)
-          ))
-        )
-    ),
-    h(ConfirmDialog,{open:!!confirm,title:confirm?.title,message:confirm?.msg,danger:true,onConfirm:()=>{confirm?.action();setConfirm(null);},onCancel:()=>setConfirm(null)})
-  );
+    h("h1",{className:"fw-8 text-3xl mb-4"},"📝 Accountability Log"),
+    h("p",{className:"o-50 text-base mb-16"},"Log everything. Every entry keeps the streak alive."),
+    h("div",{className:"stats-row mb-16"},h(StatCard,{label:"Streak",value:streak+" days",icon:"🔥",accent:"#f59e0b"}),h(StatCard,{label:"Today",value:todayMin+" min",icon:"⏱️",accent:"#3b82f6"})),
+    h(Card,{title:"⏱️ Study Timer",className:"mb-16"},h(StudyTimer,{certId,onComplete:handleTimerDone}),h("div",{className:"text-sm o-50 mt-8"},"Start the timer, study, then stop to auto-log.")),
+    h(Card,{title:"Add Entry",className:"mb-16"},
+      h("div",{className:"flex gap-8 flex-wrap mb-10"},
+        h("select",{value:certId,onChange:e=>setCertId(e.target.value),className:"sel","aria-label":"Certification"},Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.emoji+" "+c.title))),
+        h("select",{value:type,onChange:e=>setType(e.target.value),className:"sel","aria-label":"Activity type"},h("option",{value:"accountability"},"📖 Study"),h("option",{value:"lab"},"🧪 Lab"),h("option",{value:"video"},"🎥 Video"),h("option",{value:"practice_test"},"📝 Practice Test"),h("option",{value:"review"},"🔄 Review")),
+        h("input",{type:"number",min:"0",value:minutes,onChange:e=>setMinutes(e.target.value),placeholder:"Minutes",className:"sel",style:{width:90},"aria-label":"Minutes studied"})),
+      h("input",{type:"text",value:title,onChange:e=>setTitle(e.target.value),placeholder:"What did you study?",className:"input w-full mb-8","aria-label":"Study topic"}),
+      h("input",{type:"text",value:details,onChange:e=>setDetails(e.target.value),placeholder:"Details (optional)",className:"input w-full mb-10",onKeyDown:e=>{if(e.key==="Enter")handleAdd()},"aria-label":"Details"}),
+      h("button",{onClick:handleAdd,className:"btn btn-blue"},"+ Add Entry")),
+    h(Card,{title:"Activity Feed",actions:h("button",{onClick:()=>setConfirm({action:()=>{saveActivity([]);reload();showToast("Activity cleared","success")},title:"Clear All Activity?",msg:"This permanently deletes all entries."}),className:"btn btn-ghost btn-sm"},"Clear All")},
+      h("div",{className:"flex gap-8 mb-12"},
+        h("input",{type:"text",value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search...",className:"input flex-1","aria-label":"Search activity"}),
+        h("select",{value:filterCert,onChange:e=>setFilterCert(e.target.value),className:"sel","aria-label":"Filter by cert"},h("option",{value:"all"},"All Certs"),Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.title)))),
+      filtered.length===0?h(EmptyState,{icon:"📭",title:"No entries yet",subtitle:"Log your first study session above"}):
+      h("div",{className:"flex-col gap-4"},
+        grouped.map((g,i)=>g.type==="date"?h("div",{key:"d_"+g.day,className:"date-group"},g.label):
+          h("div",{key:g.entry.id,className:"feed-item"},
+            h("div",{className:"flex items-center gap-8 flex-wrap"},
+              h(CertBadge,{certId:g.entry.certId}),h("span",{className:"fw-7 text-base"},g.entry.title||g.entry.type),
+              g.entry.minutes>0&&h("span",{className:"min-badge"},g.entry.minutes+" min"),
+              h("span",{className:"ml-auto ts"},fmtTs(g.entry.ts)),
+              h("button",{onClick:()=>handleDelete(g.entry.id),className:"del-btn-feed","aria-label":"Delete entry"},"✕")),
+            g.entry.details&&h("div",{className:"mt-6 text-sm o-70 lh-relaxed"},g.entry.details))),
+        filtered.length>limit&&h("div",{className:"load-more"},h("button",{onClick:()=>setLimit(l=>l+30),className:"load-more-btn"},"Load More ("+limit+" of "+filtered.length+")")))),
+    h(ConfirmDialog,{open:!!confirm,title:confirm?.title,message:confirm?.msg,danger:true,onConfirm:()=>{confirm?.action();setConfirm(null)},onCancel:()=>setConfirm(null)}));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  JOURNAL PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function JournalItem({entry:e,onUpdateNote,onToggleArchive}){
-  const [note,setNote]=useState(e.myNote||"");
+/* ═══════════════════════════════════════════
+   JOURNAL PAGE
+   ═══════════════════════════════════════════ */
+function JournalItem({entry:e,onUpdateNote,onToggleArchive,onExplain}){
+  const[note,setNote]=useState(e.myNote||"");
   const t=useRef(null);
-  const handleNote=v=>{setNote(v);clearTimeout(t.current);t.current=setTimeout(()=>onUpdateNote(e.id,v),400);};
-  return h("div",{style:{...cardS,borderLeft:"3px solid "+(CERTS[e.certId]?.color||"#666")}},
-    h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap"}},
-      h(CertBadge,{certId:e.certId}),
-      h("span",{style:{fontSize:12,opacity:0.5}},e.deckLabel),
-      h("span",{style:{marginLeft:"auto",fontSize:11,opacity:0.4,fontFamily:"monospace"}},fmtTs(e.ts)),
-      h("button",{onClick:()=>onToggleArchive(e.id),style:{...btnS("rgba(255,255,255,0.06)"),fontSize:11,padding:"4px 10px"}},e.archived?"Unarchive":"Archive")
-    ),
-    h("div",{style:{marginBottom:10}},h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Question"),h("div",{style:{fontSize:15,fontWeight:600,lineHeight:1.45,whiteSpace:"pre-wrap"}},e.q)),
-    h("div",{style:{marginBottom:10}},h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Answer"),h("div",{style:{fontSize:14,lineHeight:1.5,whiteSpace:"pre-wrap",opacity:0.9}},e.a)),
-    e.why && h("div",{style:{marginBottom:10,padding:12,borderRadius:10,background:"rgba(59,130,246,0.06)"}},h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Why"),h("div",{style:{fontSize:13,lineHeight:1.6,opacity:0.85,whiteSpace:"pre-wrap"}},e.why)),
-    h("div",null,h("div",{style:{fontSize:11,fontWeight:700,opacity:0.4,textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"My Note"),
-      h("textarea",{value:note,onChange:ev=>handleNote(ev.target.value),placeholder:"What tricked you? What rule fixes it? How will you spot it next time?",style:{width:"100%",minHeight:80,resize:"vertical",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:10,color:"#e9eefc",fontSize:13,lineHeight:1.5}}))
-  );
+  const handleNote=v=>{setNote(v);clearTimeout(t.current);t.current=setTimeout(()=>onUpdateNote(e.id,v),400)};
+  return h("div",{className:"card",style:{borderLeft:"3px solid "+(CERTS[e.certId]?.color||"#666")}},
+    h("div",{className:"flex items-center gap-8 mb-12 flex-wrap"},
+      h(CertBadge,{certId:e.certId}),h("span",{className:"text-sm o-50"},e.deckLabel),h("span",{className:"ml-auto ts"},fmtTs(e.ts)),
+      h("button",{onClick:()=>onExplain?.({q:e.q,a:e.a,why:e.why}),className:"btn btn-cyan btn-sm"},"🤖 Explain"),
+      h("button",{onClick:()=>onToggleArchive(e.id),className:"btn btn-ghost btn-sm"},e.archived?"Unarchive":"Archive")),
+    h("div",{className:"mb-10"},h("div",{className:"section-label mb-4"},"Question"),h("div",{className:"text-lg fw-6 lh-snug pre-wrap"},e.q)),
+    h("div",{className:"mb-10"},h("div",{className:"section-label mb-4"},"Answer"),h("div",{className:"text-base lh-relaxed pre-wrap o-85"},e.a)),
+    e.why&&h("div",{className:"why-box mb-10"},h("div",{className:"section-label mb-4"},"Why"),h("div",{className:"text-sm lh-relaxed o-85 pre-wrap"},e.why)),
+    h("div",null,h("div",{className:"section-label mb-4"},"My Note"),
+      h("textarea",{value:note,onChange:ev=>handleNote(ev.target.value),placeholder:"What tricked you? How will you spot it next time?",className:"textarea",style:{minHeight:80},"aria-label":"Personal note for this question"})));
 }
 
-function JournalPage({toast:showToast}){
-  const [journal,setJ]=useState(getJournal());
-  const [search,setSearch]=useState("");
-  const [certFilter,setCertFilter]=useState("all");
-  const [hideArchived,setHideArchived]=useState(true);
-  const [confirm,setConfirm]=useState(null);
+function JournalPage({toast:showToast,onExplain,refreshTick}){
+  const[journal,setJ]=useState(getJournal());
+  const[search,setSearch]=useState("");const[certFilter,setCertFilter]=useState("all");
+  const[hideArchived,setHideArchived]=useState(true);const[confirm,setConfirm]=useState(null);
+  const[limit,setLimit]=useState(20);
   const reload=()=>setJ(getJournal());
-  const filtered=journal.filter(e=>{
-    if(certFilter!=="all"&&e.certId!==certFilter) return false;
-    if(hideArchived&&e.archived) return false;
-    if(search){const hay=(e.q+" "+e.a+" "+e.why+" "+e.myNote+" "+e.deckLabel).toLowerCase();if(!hay.includes(search.toLowerCase())) return false;}
-    return true;
-  });
-  const updateNote=(id,note)=>{const arr=getJournal();const idx=arr.findIndex(x=>x.id===id);if(idx>=0){arr[idx].myNote=note;saveJournal(arr);}};
-  const toggleArchive=id=>{const arr=getJournal();const idx=arr.findIndex(x=>x.id===id);if(idx>=0){arr[idx].archived=!arr[idx].archived;saveJournal(arr);reload();showToast(arr[idx].archived?"Archived":"Unarchived","success");}};
+  useEffect(()=>{reload();},[refreshTick]);
+  const filtered=useMemo(()=>journal.filter(e=>{if(certFilter!=="all"&&e.certId!==certFilter)return false;if(hideArchived&&e.archived)return false;if(search&&!(e.q+" "+e.a+" "+e.why+" "+e.myNote+" "+e.deckLabel).toLowerCase().includes(search.toLowerCase()))return false;return true}),[journal,certFilter,hideArchived,search]);
+  const updateNote=(id,note)=>{const arr=getJournal();const idx=arr.findIndex(x=>x.id===id);if(idx>=0){arr[idx].myNote=note;saveJournal(arr)}};
+  const toggleArchive=id=>{const arr=getJournal();const idx=arr.findIndex(x=>x.id===id);if(idx>=0){arr[idx].archived=!arr[idx].archived;saveJournal(arr);reload();showToast(arr[idx].archived?"Archived":"Unarchived","success")}};
+
+  // Group by date
+  const grouped=useMemo(()=>{const items=filtered.slice(0,limit);const groups=[];let lastDay="";
+    items.forEach(e=>{const d=dayK(e.ts);if(d!==lastDay){groups.push({type:"date",day:d,label:fmtDay(e.ts)});lastDay=d}groups.push({type:"item",entry:e})});return groups},[filtered,limit]);
 
   return h("div",null,
-    h("h1",{style:{margin:"0 0 4px",fontSize:24,fontWeight:800}},"\uD83D\uDCD3 Wrong-Answer Journal"),
-    h("p",{style:{margin:"0 0 16px",opacity:0.5,fontSize:14}},"Every card you miss lands here. Add notes to learn the pattern and beat it next time."),
-    h(Card,{style:{marginBottom:16}},
-      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
-        h("input",{type:"text",value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search questions, answers, notes...",style:{...selS,flex:1,minWidth:200}}),
-        h("select",{value:certFilter,onChange:e=>setCertFilter(e.target.value),style:selS},
-          h("option",{value:"all"},"All Certs"),Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.title))),
-        h("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600,cursor:"pointer"}},
-          h("input",{type:"checkbox",checked:hideArchived,onChange:e=>setHideArchived(e.target.checked),style:{transform:"scale(1.2)"}}),"Hide archived"),
-        h("div",{style:{flex:1}}),
-        h(Pill,{label:"Total",value:journal.length}),
-        h("button",{onClick:()=>setConfirm(true),style:{...btnS("rgba(255,255,255,0.06)"),fontSize:12}},"Clear All")
-      )
-    ),
-    filtered.length===0 ? h(Card,null,h(EmptyState,{icon:"\uD83C\uDFAF",title:"No wrong answers to show",subtitle:journal.length===0?"Study some flashcards \u2014 missed questions will appear here":"Try changing your filters"})) :
-      h("div",{style:{display:"flex",flexDirection:"column",gap:12}},
-        filtered.slice(0,30).map(e=>h(JournalItem,{key:e.id,entry:e,onUpdateNote:updateNote,onToggleArchive:toggleArchive})),
-        filtered.length>30 && h("div",{style:{textAlign:"center",opacity:0.5,padding:12,fontSize:13}},"Showing first 30 of "+filtered.length)
-      ),
-    h(ConfirmDialog,{open:!!confirm,title:"Clear Entire Journal?",message:"This permanently deletes all wrong-answer entries and notes.",danger:true,onConfirm:()=>{saveJournal([]);reload();showToast("Journal cleared","success");setConfirm(null);},onCancel:()=>setConfirm(null)})
-  );
+    h("h1",{className:"fw-8 text-3xl mb-4"},"📓 Wrong-Answer Journal"),
+    h("p",{className:"o-50 text-base mb-16"},"Every card you miss lands here. Add notes to beat it next time."),
+    h(Card,{className:"mb-16"},
+      h("div",{className:"flex gap-8 flex-wrap items-center"},
+        h("input",{type:"text",value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search...",className:"input flex-1",style:{minWidth:180},"aria-label":"Search journal"}),
+        h("select",{value:certFilter,onChange:e=>setCertFilter(e.target.value),className:"sel","aria-label":"Filter by cert"},h("option",{value:"all"},"All Certs"),Object.values(CERTS).map(c=>h("option",{key:c.id,value:c.id},c.title))),
+        h("label",{className:"flex items-center gap-6 text-sm fw-6 pointer"},h("input",{type:"checkbox",checked:hideArchived,onChange:e=>setHideArchived(e.target.checked),style:{transform:"scale(1.2)"}}),"Hide archived"),
+        h("div",{className:"flex-1"}),h(Pill,{label:"Total",value:journal.length}),
+        h("button",{onClick:()=>setConfirm(true),className:"btn btn-ghost btn-sm"},"Clear All"))),
+    filtered.length===0?h(Card,null,h(EmptyState,{icon:"🎯",title:"No wrong answers to show",subtitle:journal.length===0?"Study flashcards — missed questions appear here":"Try changing your filters"})):
+    h("div",{className:"flex-col gap-8"},
+      grouped.map((g,i)=>g.type==="date"?h("div",{key:"d_"+g.day,className:"date-group"},g.label):
+        h(JournalItem,{key:g.entry.id,entry:g.entry,onUpdateNote:updateNote,onToggleArchive:toggleArchive,onExplain})),
+      filtered.length>limit&&h("div",{className:"load-more"},h("button",{onClick:()=>setLimit(l=>l+20),className:"load-more-btn"},"Load More ("+limit+" of "+filtered.length+")"))),
+    h(ConfirmDialog,{open:!!confirm,title:"Clear Entire Journal?",message:"This permanently deletes all wrong-answer entries and notes.",danger:true,onConfirm:()=>{saveJournal([]);reload();showToast("Journal cleared","success");setConfirm(null)},onCancel:()=>setConfirm(null)}));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  CERT PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════
+   CERT PAGE
+   ═══════════════════════════════════════════ */
 function CertPage({certId,toast:showToast}){
   const c=CERTS[certId];
-  const [data,setData]=useState(getCert(certId));
-  const [topic,setTopic]=useState("");
-  const [minutes,setMinutes]=useState("");
-  const [objText,setObjText]=useState("");
+  const[data,setData]=useState(getCert(certId));
+  const[topic,setTopic]=useState("");const[minutes,setMinutes]=useState("");const[objText,setObjText]=useState("");
+  const[sessLimit,setSessLimit]=useState(20);
   const noteTimer=useRef(null);
-
-  useEffect(()=>{setData(getCert(certId));setTopic("");setMinutes("");setObjText("");},[certId]);
-
-  const save=d=>{saveCert(certId,d);setData({...d});};
-  const handleNotes=val=>{clearTimeout(noteTimer.current);const d={...data,notes:val};setData(d);noteTimer.current=setTimeout(()=>{d.updatedAt=now();save(d);showToast("Notes saved","success");},500);};
-  const addSession=()=>{
-    if(!topic&&!minutes){showToast("Add a topic or minutes","error");return;}
-    const entry={id:uid(),ts:now(),topic:topic||"Study",minutes:Number(minutes||0)};
-    const d={...data,sessions:[entry,...(data.sessions||[])].slice(0,2000),updatedAt:now()};save(d);
-    addActivity({certId,type:"study_session",minutes:entry.minutes,title:entry.topic,details:"Logged from "+c.title+" page"});
-    setTopic("");setMinutes("");showToast("Session added + logged to Vlog","success");
-  };
-  const deleteSession=id=>{const d={...data,sessions:(data.sessions||[]).filter(s=>s.id!==id),updatedAt:now()};save(d);showToast("Session deleted","success");};
-  const replaceObjectives=()=>{
-    const lines=objText.split("\n").map(l=>l.trim().replace(/^[-*]\s+/,"").replace(/^\d+\.\s+/,"").trim()).filter(Boolean);
-    const d={...data,objectives:lines.map(t=>({text:t,done:false})),updatedAt:now()};save(d);showToast(lines.length+" objectives loaded","success");
-  };
-  const toggleObj=idx=>{const d={...data};d.objectives=[...(d.objectives||[])];d.objectives[idx]={...d.objectives[idx],done:!d.objectives[idx].done};d.updatedAt=now();save(d);};
-  const removeObj=idx=>{const d={...data};d.objectives=[...(d.objectives||[])];d.objectives.splice(idx,1);d.updatedAt=now();save(d);};
-  const objs=data.objectives||[], doneCount=objs.filter(o=>o.done).length;
+  useEffect(()=>{setData(getCert(certId));setTopic("");setMinutes("");setObjText("");setSessLimit(20)},[certId]);
+  const save=d=>{saveCert(certId,d);setData({...d})};
+  const handleNotes=val=>{clearTimeout(noteTimer.current);const d={...data,notes:val};setData(d);noteTimer.current=setTimeout(()=>{d.updatedAt=now();save(d);showToast("Notes saved","success")},500)};
+  const addSession=()=>{if(!topic&&!minutes){showToast("Add a topic or minutes","error");return}const entry={id:uid(),ts:now(),topic:topic||"Study",minutes:Number(minutes||0)};const d={...data,sessions:[entry,...(data.sessions||[])].slice(0,2000),updatedAt:now()};save(d);addActivity({certId,type:"study_session",minutes:entry.minutes,title:entry.topic,details:"Logged from "+c.title+" page"});setTopic("");setMinutes("");showToast("Session added","success")};
+  const deleteSession=id=>{save({...data,sessions:(data.sessions||[]).filter(s=>s.id!==id),updatedAt:now()});showToast("Session deleted","success")};
+  const replaceObjectives=()=>{const lines=objText.split("\n").map(l=>l.trim().replace(/^[-*]\s+/,"").replace(/^\d+\.\s+/,"").trim()).filter(Boolean);save({...data,objectives:lines.map(t=>({text:t,done:false})),updatedAt:now()});showToast(lines.length+" objectives loaded","success")};
+  const toggleObj=idx=>{const d={...data,objectives:[...(data.objectives||[])]};d.objectives[idx]={...d.objectives[idx],done:!d.objectives[idx].done};d.updatedAt=now();save(d)};
+  const removeObj=idx=>{const d={...data,objectives:[...(data.objectives||[])]};d.objectives.splice(idx,1);d.updatedAt=now();save(d)};
+  const objs=data.objectives||[],doneCount=objs.filter(o=>o.done).length;
+  const sessions=(data.sessions||[]);
 
   return h("div",null,
-    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:16}},
-      h("div",{style:{width:48,height:48,borderRadius:14,background:c.color+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"2px solid "+c.color+"44"}},c.emoji),
-      h("div",null,
-        h("h1",{style:{margin:0,fontSize:24,fontWeight:800}},c.title),
-        data.updatedAt && h("div",{style:{fontSize:12,opacity:0.4}},"Last updated "+fmtTs(data.updatedAt))
+    h("div",{className:"flex items-center gap-12 mb-16"},
+      h("div",{style:{width:48,height:48,borderRadius:14,background:c.color+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"2px solid "+c.color+"44"},"aria-hidden":"true"},c.emoji),
+      h("div",null,h("h1",{className:"fw-8 text-3xl",style:{margin:0}},c.title),data.updatedAt&&h("div",{className:"text-sm o-40"},"Last updated "+fmtTs(data.updatedAt))),
+      objs.length>0&&h("div",{className:"ml-auto"},h(ProgressRing,{pct:objs.length?(doneCount/objs.length)*100:0,size:60,stroke:5,color:c.color,label:"done"}))),
+    h(Card,{title:"📝 Notes",className:"mb-16"},h("textarea",{value:data.notes||"",onChange:e=>handleNotes(e.target.value),placeholder:c.title+" study notes, commands, key concepts...",className:"textarea",style:{minHeight:200},"aria-label":"Study notes for "+c.title})),
+    h(Card,{title:"📚 Study Sessions",className:"mb-16"},
+      h("div",{className:"flex gap-8 flex-wrap mb-12"},
+        h("input",{type:"text",value:topic,onChange:e=>setTopic(e.target.value),placeholder:"Topic (e.g., Subnetting, PKI)",className:"input flex-1",style:{minWidth:200},onKeyDown:e=>{if(e.key==="Enter")addSession()},"aria-label":"Session topic"}),
+        h("input",{type:"number",min:"0",value:minutes,onChange:e=>setMinutes(e.target.value),placeholder:"Min",className:"sel",style:{width:80},"aria-label":"Minutes"}),
+        h("button",{onClick:addSession,className:"btn",style:{background:c.color+"33",borderColor:c.color+"55"}},"+ Add Session")),
+      sessions.length===0?h("div",{className:"o-50 text-sm p-12"},"No sessions yet"):
+      h("div",{className:"flex-col gap-6"},
+        sessions.slice(0,sessLimit).map(s=>h("div",{key:s.id,className:"session-item"},
+          h("span",{className:"fw-7 text-base"},s.topic),h("span",{className:"text-sm o-60"},s.minutes+" min"),
+          h("span",{className:"ml-auto ts"},fmtTs(s.ts)),h("button",{onClick:()=>deleteSession(s.id),className:"del-btn","aria-label":"Delete session"},"✕"))),
+        sessions.length>sessLimit&&h("div",{className:"load-more"},h("button",{onClick:()=>setSessLimit(l=>l+20),className:"load-more-btn"},"Load More")))),
+    h(Card,{title:"🎯 Objectives "+(objs.length>0?"("+doneCount+"/"+objs.length+")":"")},
+      h("div",{className:"mb-12"},
+        h("textarea",{value:objText,onChange:e=>setObjText(e.target.value),placeholder:"Paste objectives one per line...",className:"textarea mb-8",style:{minHeight:80},"aria-label":"Paste objectives"}),
+        h("button",{onClick:replaceObjectives,className:"btn",style:{background:c.color+"33",borderColor:c.color+"55"}},"Replace Objectives")),
+      objs.length===0?h("div",{className:"o-50 text-sm p-12"},"No objectives yet. Paste them above."):
+      h("div",{className:"flex-col gap-4"},objs.map((o,i)=>h("div",{key:i,className:cn("obj-item",o.done&&"done")},
+        h("input",{type:"checkbox",checked:o.done,onChange:()=>toggleObj(i),className:"pointer",style:{transform:"scale(1.2)"},"aria-label":"Toggle objective: "+o.text}),
+        h("span",{className:"flex-1 text-base",style:o.done?{textDecoration:"line-through"}:null},o.text),
+        h("button",{onClick:()=>removeObj(i),className:"del-btn","aria-label":"Remove objective"},"✕"))))));
+}
+
+/* ═══════════════════════════════════════════
+   SETTINGS PAGE
+   ═══════════════════════════════════════════ */
+function SettingsPage({toast:showToast}){
+  const[confirm,setConfirm]=useState(null);
+  const[aiS,setAiS]=useState(getAISettings());
+  const fileRef=useRef(null);
+  const handleExport=()=>{const payload={version:3,appVersion:APP_VERSION,exportedAt:now(),settings:getSettings(),ai_settings:getAISettings(),certs:Object.fromEntries(Object.keys(CERTS).map(k=>[k,getCert(k)])),journal:getJournal(),activity:getActivity(),ai_decks:getSavedDecks(),blog_posts:getBlogPosts(),giscus:getGiscus()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`StudyHub_Backup_${now().slice(0,10)}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);showToast("Backup exported","success")};
+  const handleImport=async e=>{const f=e.target.files?.[0];if(!f)return;try{const p=JSON.parse(await f.text());if(p.settings)saveSettings(p.settings);if(p.ai_settings)saveAISettings(p.ai_settings);if(p.certs)Object.keys(CERTS).forEach(k=>{if(p.certs[k])saveCert(k,p.certs[k])});if(p.journal)saveJournal(p.journal);if(p.activity)saveActivity(p.activity);if(p.ai_decks)saveSavedDecks(p.ai_decks);if(Array.isArray(p.blog_posts))saveBlogPosts(p.blog_posts);if(p.giscus)saveGiscus(p.giscus);showToast("Backup restored! Refreshing...","success");setTimeout(()=>window.location.reload(),500)}catch(err){showToast("Import failed: "+err.message,"error")}};
+  const updateAI=(k,v)=>{const s={...aiS,[k]:v};setAiS(s);saveAISettings(s)};
+  const testAI=async()=>{try{showToast("Testing connection...","info");const r=await fetch(aiS.endpoint+"/api/tags");if(!r.ok)throw new Error("Status "+r.status);const data=await r.json();const models=(data.models||[]).map(m=>m.name).join(", ");showToast("✅ Connected! Models: "+(models||"none found"),"success")}catch(err){showToast("❌ Failed: "+err.message+". Make sure Ollama is running and OLLAMA_ORIGINS includes your site URL.","error")}};
+  const activity=getActivity(),journal=getJournal();
+
+  return h("div",null,
+    h("h1",{className:"fw-8 text-3xl mb-16"},"⚙️ Settings & Data"),
+    // AI Settings
+    h(Card,{title:"🤖 AI Teacher Settings",className:"mb-16"},
+      h("div",{className:"flex-col gap-12"},
+        h("div",null,
+          h("label",{className:"text-sm fw-6 mb-4",style:{display:"block"}},"Ollama Endpoint"),
+          h("input",{type:"text",value:aiS.endpoint,onChange:e=>updateAI("endpoint",e.target.value),className:"input w-full","aria-label":"Ollama API endpoint"}),
+          h("div",{className:"text-xs o-50 mt-4"},"Default: http://localhost:11434 — Set OLLAMA_ORIGINS=* before starting Ollama for CORS")),
+        h("div",null,
+          h("label",{className:"text-sm fw-6 mb-4",style:{display:"block"}},"Model"),
+          h("input",{type:"text",value:aiS.model,onChange:e=>updateAI("model",e.target.value),className:"input w-full","aria-label":"AI model name"}),
+          h("div",{className:"text-xs o-50 mt-4"},"e.g., llama3.2, mistral, phi3, gemma2")),
+        h("div",{className:"flex gap-8"},
+          h("button",{onClick:testAI,className:"btn btn-cyan"},"🔌 Test Connection"),
+          h("button",{onClick:()=>{const decks=getSavedDecks();const count=Object.keys(decks).length;if(!count){showToast("No saved decks","info");return}setConfirm({action:()=>{saveSavedDecks({});showToast("AI decks cleared","success")},title:"Clear AI Generated Decks?",msg:count+" saved decks will be deleted."})},className:"btn btn-ghost"},"Clear AI Decks")))),
+    // Backup
+    h(Card,{title:"Backup & Restore",className:"mb-16"},
+      h("p",{className:"o-70 text-base lh-relaxed mb-12"},"All data is stored in your browser\u2019s localStorage. Export regularly."),
+      h("div",{className:"flex gap-10 flex-wrap"},
+        h("button",{onClick:handleExport,className:"btn btn-blue"},"📥 Export Full Backup"),
+        h("button",{onClick:()=>fileRef.current?.click(),className:"btn btn-green"},"📤 Import Backup"),
+        h("input",{ref:fileRef,type:"file",accept:".json",onChange:handleImport,className:"hidden","aria-label":"Import backup file"}))),
+    h(Card,{title:"Data Summary",className:"mb-16"},
+      h("div",{className:"grid-2col"},
+        h("div",{className:"p-12 r-10 surface-s"},h("div",{className:"text-sm o-50"},"Activity"),h("div",{className:"text-2xl fw-8"},activity.length)),
+        h("div",{className:"p-12 r-10 surface-s"},h("div",{className:"text-sm o-50"},"Journal"),h("div",{className:"text-2xl fw-8"},journal.length)),
+        h("div",{className:"p-12 r-10 surface-s"},h("div",{className:"text-sm o-50"},"AI Decks"),h("div",{className:"text-2xl fw-8"},Object.keys(getSavedDecks()).length)),
+        Object.values(CERTS).map(c=>{const d=getCert(c.id);return h("div",{key:c.id,className:"p-12 r-10 surface-s"},h("div",{className:"text-sm o-50"},c.emoji+" "+c.title),h("div",{className:"text-base"},(d.objectives||[]).length+" obj, "+(d.sessions||[]).length+" sess"))}))),
+    h(Card,{title:"Danger Zone"},h("div",{className:"flex gap-10 flex-wrap"},
+      h("button",{onClick:()=>setConfirm({action:()=>{saveActivity([]);showToast("Activity cleared","success")},title:"Clear All Activity?",msg:"Permanently deletes all vlog entries."}),className:"btn btn-red"},"Clear Activity"),
+      h("button",{onClick:()=>setConfirm({action:()=>{saveJournal([]);showToast("Journal cleared","success")},title:"Clear Journal?",msg:"Permanently deletes all wrong-answer entries."}),className:"btn btn-red"},"Clear Journal"),
+      h("button",{onClick:()=>setConfirm({action:()=>{Object.keys(CERTS).forEach(k=>saveCert(k,defaultCert(k)));showToast("Cert data reset","success")},title:"Reset Cert Data?",msg:"Clears notes, sessions, and objectives for all certifications."}),className:"btn btn-red"},"Reset Certs"))),
+    h(ConfirmDialog,{open:!!confirm,title:confirm?.title,message:confirm?.msg,danger:true,onConfirm:()=>{confirm?.action();setConfirm(null)},onCancel:()=>setConfirm(null)}));
+}
+
+/* ═══════════════════════════════════════════
+   LEARNING PROJECTS
+   ═══════════════════════════════════════════ */
+function LearningProjectsPage({nav,toast}){
+  return h("div",{className:"flex-col gap-12"},
+    h("div",{className:"lp-top"},
+      h("div",null,h("div",{className:"text-lg fw-9"},"🧪 Learning Projects"),h("div",{className:"text-sm o-70 mt-4"},"Click a card to open in a new tab.")),
+      h("div",{className:"flex gap-10"},h("button",{onClick:()=>nav("dashboard"),className:"btn btn-ghost"},"← Back"))),
+    h("div",{className:"lp-wrap"},h("iframe",{src:"./learning-projects.html",title:"Learning Projects",style:{width:"100%",height:"72vh",border:"none",display:"block",background:"transparent"}})));
+}
+
+
+/* ═══════════════════════════════════════════
+   BLOG + PUBLIC COMMENTS (Giscus)
+   - Posts are editable locally (localStorage) and publishable via blog-posts.json in your repo
+   - Comments / voting / moderation handled by GitHub Discussions through Giscus
+   ═══════════════════════════════════════════ */
+
+const BLOG_DOCS = [
+  // Example:
+  // { title: "Subnetting Cheat Sheet (PDF)", href: "./docs/subnetting-cheatsheet.pdf", certId: "netplus", kind: "PDF" }
+];
+
+const defaultBlogPosts = () => ([
+  {
+    id: "welcome",
+    title: "My Microsoft Certification Journey",
+    date: "2026-02-15",
+    certId: "all",
+    tags: ["microsoft", "journey", "notes"],
+    content:
+`Welcome! This is my public journal and proof-of-work log.
+
+✅ What you'll find here
+- Weekly progress updates
+- Study strategies that worked (and didn't)
+- Practice lab notes and screenshots
+- Links to artifacts (notes, cheat sheets, mini-projects)
+
+💬 Discussion
+Use the comments section below to ask questions or challenge an answer.
+Please keep it constructive — we're all here to learn.`
+  }
+]);
+
+const getBlogPosts = () => (jget(KEY.BLOG, null) || defaultBlogPosts());
+const saveBlogPosts = (posts) => jset(KEY.BLOG, Array.isArray(posts) ? posts : defaultBlogPosts());
+
+async function loadBlogPostsFromJson(url) {
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (!Array.isArray(data)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// --- Giscus (GitHub Discussions) settings (stored in localStorage)
+const defaultGiscus = () => ({
+  repo: "cbw29512/StudyHub",
+  repoId: "",
+  category: "General",
+  categoryId: "",
+  theme: "dark_dimmed",
+  lang: "en"
+});
+const getGiscus = () => ({ ...defaultGiscus(), ...(jget(KEY.GISCUS, {}) || {}) });
+const saveGiscus = cfg => jset(KEY.GISCUS, cfg);
+
+function GiscusEmbed({ term, toast: showToast }) {
+  const hostRef = useRef(null);
+  const cfg = getGiscus();
+
+  useEffect(() => {
+    if (!hostRef.current) return;
+
+    // Not configured yet
+    if (!cfg.repo || !cfg.repoId || !cfg.category || !cfg.categoryId) return;
+
+    hostRef.current.innerHTML = "";
+    const s = document.createElement("script");
+    s.src = "https://giscus.app/client.js";
+    s.async = true;
+    s.crossOrigin = "anonymous";
+
+    s.setAttribute("data-repo", cfg.repo);
+    s.setAttribute("data-repo-id", cfg.repoId);
+    s.setAttribute("data-category", cfg.category);
+    s.setAttribute("data-category-id", cfg.categoryId);
+
+    // Stable term so each post gets its own thread
+    s.setAttribute("data-mapping", "specific");
+    s.setAttribute("data-term", term);
+
+    // Voting / reactions (👍👎 etc.)
+    s.setAttribute("data-reactions-enabled", "1");
+    s.setAttribute("data-emit-metadata", "0");
+    s.setAttribute("data-input-position", "top");
+    s.setAttribute("data-theme", cfg.theme || "dark_dimmed");
+    s.setAttribute("data-lang", cfg.lang || "en");
+    s.setAttribute("data-loading", "lazy");
+
+    hostRef.current.appendChild(s);
+  }, [term, cfg.repo, cfg.repoId, cfg.category, cfg.categoryId, cfg.theme, cfg.lang]);
+
+  if (!cfg.repoId || !cfg.categoryId) {
+    return h("div", { className: "giscus-wrap" },
+      h("div", { className: "fw-8 text-xl" }, "Comments (setup needed)"),
+      h("div", { className: "text-sm o-70 mt-6" },
+        "To enable public replies + 👍/👎 voting + moderation, connect this page to GitHub Discussions via Giscus."),
+      h("div", { className: "text-sm o-70 mt-6" },
+        "Open the Giscus setup site, choose your repo and category, then paste the Repo ID + Category ID below."),
+      h(GiscusSetup, { toast: showToast })
+    );
+  }
+
+  return h("div", { className: "giscus-wrap" }, h("div", { ref: hostRef }));
+}
+
+function GiscusSetup({ toast: showToast }) {
+  const [cfg, setCfg] = useState(getGiscus());
+  const save = () => { saveGiscus(cfg); showToast("Giscus settings saved", "success"); };
+
+  return h("div", { className: "mt-10" },
+    h("div", { className: "grid-2col" },
+      h("div", null,
+        h("label", { className: "label" }, "Repo (owner/name)"),
+        h("input", { className: "input", value: cfg.repo || "", onChange: e => setCfg({ ...cfg, repo: e.target.value.trim() }), placeholder: "cbw29512/StudyHub" })
       ),
-      objs.length>0 && h("div",{style:{marginLeft:"auto"}},h(ProgressRing,{pct:objs.length?(doneCount/objs.length)*100:0,size:60,stroke:5,color:c.color,label:"done"}))
-    ),
-    // Notes
-    h(Card,{title:"\uD83D\uDCDD Notes",style:{marginBottom:16}},
-      h("textarea",{value:data.notes||"",onChange:e=>handleNotes(e.target.value),placeholder:c.title+" study notes, commands, diagrams, key concepts...",style:{width:"100%",minHeight:200,resize:"vertical",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:14,color:"#e9eefc",fontSize:14,lineHeight:1.6}})
-    ),
-    // Sessions
-    h(Card,{title:"\uD83D\uDCDA Study Sessions",style:{marginBottom:16}},
-      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}},
-        h("input",{type:"text",value:topic,onChange:e=>setTopic(e.target.value),placeholder:"Topic (e.g., Subnetting, PKI)",style:{...selS,flex:1,minWidth:200},onKeyDown:e=>{if(e.key==="Enter") addSession();}}),
-        h("input",{type:"number",min:"0",value:minutes,onChange:e=>setMinutes(e.target.value),placeholder:"Min",style:{...selS,width:80}}),
-        h("button",{onClick:addSession,style:btnS(c.color)},"+ Add Session")
-      ),
-      h("div",{style:{fontSize:12,opacity:0.5,marginBottom:12}},"Sessions auto-log to the Accountability Vlog too."),
-      (data.sessions||[]).length===0 ? h("div",{style:{opacity:0.5,fontSize:13,padding:12}},"No sessions yet") :
-        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-          (data.sessions||[]).slice(0,20).map(s=>h("div",{key:s.id,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:"rgba(255,255,255,0.03)"}},
-            h("span",{style:{fontWeight:700,fontSize:14}},s.topic),
-            h("span",{style:{fontSize:12,opacity:0.6}},s.minutes+" min"),
-            h("span",{style:{marginLeft:"auto",fontSize:11,opacity:0.4,fontFamily:"monospace"}},fmtTs(s.ts)),
-            h("button",{onClick:()=>deleteSession(s.id),style:{padding:"3px 8px",borderRadius:6,background:"rgba(255,60,60,0.1)",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:11}},"\u2715")
-          ))
+      h("div", null,
+        h("label", { className: "label" }, "Theme"),
+        h("select", { className: "input", value: cfg.theme || "dark_dimmed", onChange: e => setCfg({ ...cfg, theme: e.target.value }) },
+          ["dark_dimmed", "transparent_dark", "preferred_color_scheme", "light"].map(x => h("option", { key: x, value: x }, x))
         )
-    ),
-    // Objectives
-    h(Card,{title:"\uD83C\uDFAF Objectives Checklist "+(objs.length>0?"("+doneCount+"/"+objs.length+")":"")},
-      h("div",{style:{marginBottom:12}},
-        h("textarea",{value:objText,onChange:e=>setObjText(e.target.value),placeholder:"Paste objectives one per line...",style:{width:"100%",minHeight:80,resize:"vertical",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:10,color:"#e9eefc",fontSize:13,lineHeight:1.5,marginBottom:8}}),
-        h("button",{onClick:replaceObjectives,style:btnS(c.color)},"Replace Objectives from Text")
       ),
-      objs.length===0 ? h("div",{style:{opacity:0.5,fontSize:13,padding:12}},"No objectives yet. Paste them above.") :
-        h("div",{style:{display:"flex",flexDirection:"column",gap:4}},
-          objs.map((o,i)=>h("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,background:o.done?"rgba(34,197,94,0.06)":"rgba(255,255,255,0.02)",opacity:o.done?0.6:1}},
-            h("input",{type:"checkbox",checked:o.done,onChange:()=>toggleObj(i),style:{transform:"scale(1.2)",cursor:"pointer"}}),
-            h("span",{style:{flex:1,fontSize:14,textDecoration:o.done?"line-through":"none"}},o.text),
-            h("button",{onClick:()=>removeObj(i),style:{padding:"2px 6px",borderRadius:6,background:"none",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:12}},"\u2715")
-          ))
+      h("div", null,
+        h("label", { className: "label" }, "Repo ID"),
+        h("input", { className: "input", value: cfg.repoId || "", onChange: e => setCfg({ ...cfg, repoId: e.target.value.trim() }), placeholder: "Paste from giscus.app" })
+      ),
+      h("div", null,
+        h("label", { className: "label" }, "Category"),
+        h("input", { className: "input", value: cfg.category || "", onChange: e => setCfg({ ...cfg, category: e.target.value.trim() }), placeholder: "General / Blog / Announcements" })
+      ),
+      h("div", null,
+        h("label", { className: "label" }, "Category ID"),
+        h("input", { className: "input", value: cfg.categoryId || "", onChange: e => setCfg({ ...cfg, categoryId: e.target.value.trim() }), placeholder: "Paste from giscus.app" })
+      ),
+      h("div", null,
+        h("label", { className: "label" }, "Language"),
+        h("input", { className: "input", value: cfg.lang || "en", onChange: e => setCfg({ ...cfg, lang: e.target.value.trim() }), placeholder: "en" })
+      )
+    ),
+    h("div", { className: "flex gap-10 mt-10 flex-wrap" },
+      h("button", { className: "btn btn-blue", onClick: save }, "Save Giscus Settings"),
+      h("button", { className: "btn btn-ghost", onClick: () => { saveGiscus(defaultGiscus()); setCfg(getGiscus()); showToast("Giscus reset", "info"); } }, "Reset")
+    ),
+    h("div", { className: "text-xs o-60 mt-10" },
+      "Moderation (delete/ban) happens on GitHub Discussions. As repo owner/mod, you can delete comments and block users from GitHub.")
+  );
+}
+
+function BlogPage({ nav, toast: showToast }) {
+  const [posts, setPosts] = useState(getBlogPosts());
+  const [activeId, setActiveId] = useState(posts?.[0]?.id || "welcome");
+  const [search, setSearch] = useState("");
+  const [filterCert, setFilterCert] = useState("all");
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (loaded) return;
+    setLoaded(true);
+    loadBlogPostsFromJson("./blog-posts.json").then(data => {
+      if (data && data.length) {
+        saveBlogPosts(data);
+        setPosts(data);
+        if (!data.find(p => p.id === activeId)) setActiveId(data[0].id);
+      }
+    });
+  }, [loaded]);
+
+  const filtered = useMemo(() => (posts || []).filter(p => {
+    if (filterCert !== "all" && (p.certId || "all") !== filterCert) return false;
+    if (!search) return true;
+    const hay = (p.title + " " + (p.tags || []).join(" ") + " " + (p.content || "")).toLowerCase();
+    return hay.includes(search.toLowerCase());
+  }), [posts, search, filterCert]);
+
+  const active = (posts || []).find(p => p.id === activeId) || filtered[0] || posts?.[0] || defaultBlogPosts()[0];
+
+  useEffect(() => { if (active?.id && activeId !== active.id) setActiveId(active.id); }, [active?.id]);
+
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(posts || [], null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "blog-posts.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    showToast("Downloaded blog-posts.json", "success");
+  };
+
+  const importJson = async (file) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error("Not an array");
+      saveBlogPosts(data);
+      setPosts(data);
+      setActiveId(data[0]?.id || "welcome");
+      showToast("Imported posts", "success");
+    } catch {
+      showToast("Invalid blog-posts.json", "error");
+    }
+  };
+
+  return h("div", { className: "flex-col gap-12" },
+    h("div", { className: "mb-24" },
+      h("h1", { className: "fw-8 text-4xl", style: { margin: 0 } }, "📝 Blog"),
+      h("p", { className: "text-base o-60 mt-6" }, "Public journal + proof-of-work for my certification journey.")
+    ),
+
+    h("div", { className: "blog-grid" },
+
+      h("div", { className: "flex-col gap-10" },
+        h(Card, { title: "Browse Posts" },
+          h("div", { className: "flex-col gap-10" },
+            h("div", null,
+              h("label", { className: "label" }, "Search"),
+              h("input", { className: "input", value: search, onChange: e => setSearch(e.target.value), placeholder: "Search posts…" })
+            ),
+            h("div", null,
+              h("label", { className: "label" }, "Certification"),
+              h("select", { className: "input", value: filterCert, onChange: e => setFilterCert(e.target.value) },
+                h("option", { value: "all" }, "All"),
+                Object.values(CERTS).map(c => h("option", { key: c.id, value: c.id }, c.emoji + " " + c.title))
+              )
+            ),
+            h("div", { className: "blog-list" },
+              (filtered.length ? filtered : (posts || [])).map(p =>
+                h("div", { key: p.id, onClick: () => setActiveId(p.id), className: cn("blog-post-card", activeId === p.id && "active") },
+                  h("div", { className: "blog-post-title" }, p.title),
+                  h("div", { className: "blog-post-meta" },
+                    h("span", null, "📅 " + (p.date || "")),
+                    p.certId && p.certId !== "all" && CERTS[p.certId] && h("span", null, CERTS[p.certId].emoji + " " + CERTS[p.certId].title),
+                    (p.tags || []).slice(0, 3).map(t => h("span", { key: t, className: "tag" }, t))
+                  )
+                )
+              )
+            )
+          )
+        ),
+
+        h(Card, { title: "Owner Tools" },
+          h("div", { className: "text-sm o-70" },
+            "Posts are published from ", h("span", { className: "mono" }, "./blog-posts.json"),
+            ". Export/import JSON here, then commit the file to GitHub to update the public site."
+          ),
+          h("div", { className: "flex gap-10 mt-10 flex-wrap" },
+            h("button", { className: "btn btn-blue", onClick: exportJson }, "Export blog-posts.json"),
+            h("label", { className: "btn btn-ghost", style: { cursor: "pointer" } },
+              "Import blog-posts.json",
+              h("input", { type: "file", accept: "application/json", style: { display: "none" },
+                onChange: e => { const f = e.target.files?.[0]; if (f) importJson(f); e.target.value=""; } })
+            ),
+            h("button", { className: "btn btn-ghost", onClick: async () => {
+              const data = await loadBlogPostsFromJson("./blog-posts.json");
+              if (data && data.length) { saveBlogPosts(data); setPosts(data); showToast("Reloaded from blog-posts.json", "success"); }
+              else showToast("No ./blog-posts.json found (using local/default)", "info");
+            } }, "Reload from blog-posts.json")
+          )
+        ),
+
+        h(Card, { title: "Documents & Showcase" },
+          BLOG_DOCS.length
+            ? h("div", { className: "flex-col gap-10" },
+                BLOG_DOCS.map(d =>
+                  h("a", { key: d.href, className: "card-link", href: d.href, target: "_blank", rel: "noreferrer" },
+                    h("div", { className: "fw-8" }, d.title),
+                    h("div", { className: "text-xs o-60 mt-4" },
+                      (d.kind ? d.kind + " • " : "") + (d.certId && CERTS[d.certId] ? (CERTS[d.certId].emoji + " " + CERTS[d.certId].title) : "All")
+                    )
+                  )
+                )
+              )
+            : h("div", { className: "text-sm o-70" },
+                "Add links to PDFs/images in the ", h("span", { className: "mono" }, "BLOG_DOCS"),
+                " array (near the Blog code) after you upload files to your repo.")
         )
+      ),
+
+      h("div", { className: "flex-col gap-12" },
+        h(Card, { title: active?.title || "Post" },
+          active?.certId && active.certId !== "all" && CERTS[active.certId] && h("div", { className: "mb-10" },
+            h("button", { className: "btn btn-ghost", onClick: () => nav("cert", active.certId) }, "Open ", CERTS[active.certId].emoji, " ", CERTS[active.certId].title, " page →")
+          ),
+          h("div", { className: "text-xs o-60 mb-10" }, "📅 ", (active?.date || ""), " • ", (active?.tags || []).slice(0, 6).map(t => " #" + t).join("")),
+          h("div", { className: "blog-content" }, active?.content || "")
+        ),
+        h(GiscusEmbed, { term: "blog:" + (active?.id || "welcome"), toast: showToast })
+      )
     )
   );
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  SETTINGS PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function SettingsPage({toast:showToast}){
-  const [confirm,setConfirm]=useState(null);
-  const fileRef=useRef(null);
-  const handleExport=()=>{
-    const payload={exported_at:now(),version:2,settings:getSettings(),certs:{netplus:getCert("netplus"),secplus:getCert("secplus"),secai:getCert("secai")},journal:getJournal(),activity:getActivity()};
-    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url;a.download="studyhub_backup.json";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
-    showToast("Backup exported","success");
-  };
-  const handleImport=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    try{
-      const payload=JSON.parse(await f.text());
-      if(payload.settings) saveSettings(payload.settings);
-      if(payload.certs){for(const k of Object.keys(CERTS)){if(payload.certs[k]) saveCert(k,payload.certs[k]);}}
-      if(payload.journal) saveJournal(payload.journal);
-      if(payload.activity) saveActivity(payload.activity);
-      showToast("Backup restored! Refreshing...","success");
-      setTimeout(()=>window.location.reload(),500);
-    }catch(err){showToast("Import failed: "+err.message,"error");}
-  };
-  const activity=getActivity(), journal=getJournal();
 
-  return h("div",null,
-    h("h1",{style:{margin:"0 0 16px",fontSize:24,fontWeight:800}},"\u2699\uFE0F Settings & Data"),
-    h(Card,{title:"Backup & Restore",style:{marginBottom:16}},
-      h("p",{style:{margin:"0 0 12px",opacity:0.7,fontSize:14,lineHeight:1.5}},"All data is stored in your browser\u2019s localStorage. Export regularly to avoid data loss if you clear browser data."),
-      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-        h("button",{onClick:handleExport,style:btnS("#3b82f6")},"\uD83D\uDCE5 Export Full Backup"),
-        h("button",{onClick:()=>fileRef.current?.click(),style:btnS("#22c55e")},"\uD83D\uDCE4 Import Backup (Replace)"),
-        h("input",{ref:fileRef,type:"file",accept:".json",onChange:handleImport,style:{display:"none"}})
-      )
-    ),
-    h(Card,{title:"Data Summary",style:{marginBottom:16}},
-      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
-        h("div",{style:{padding:12,borderRadius:10,background:"rgba(255,255,255,0.03)"}},h("div",{style:{fontSize:12,opacity:0.5}},"Activity Entries"),h("div",{style:{fontSize:20,fontWeight:800}},activity.length)),
-        h("div",{style:{padding:12,borderRadius:10,background:"rgba(255,255,255,0.03)"}},h("div",{style:{fontSize:12,opacity:0.5}},"Journal Entries"),h("div",{style:{fontSize:20,fontWeight:800}},journal.length)),
-        Object.values(CERTS).map(c=>{const d=getCert(c.id);return h("div",{key:c.id,style:{padding:12,borderRadius:10,background:"rgba(255,255,255,0.03)"}},h("div",{style:{fontSize:12,opacity:0.5}},c.emoji+" "+c.title),h("div",{style:{fontSize:14}},(d.objectives||[]).length+" objectives, "+(d.sessions||[]).length+" sessions"));})
-      )
-    ),
-    h(Card,{title:"Danger Zone"},
-      h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-        h("button",{onClick:()=>setConfirm({action:()=>{saveActivity([]);showToast("Activity cleared","success");},title:"Clear All Activity?",msg:"This permanently deletes all vlog entries."}),style:btnS("#ef4444")},"Clear Activity Log"),
-        h("button",{onClick:()=>setConfirm({action:()=>{saveJournal([]);showToast("Journal cleared","success");},title:"Clear Journal?",msg:"This permanently deletes all wrong-answer entries."}),style:btnS("#ef4444")},"Clear Journal"),
-        h("button",{onClick:()=>setConfirm({action:()=>{Object.keys(CERTS).forEach(k=>saveCert(k,defaultCert(k)));showToast("Cert data reset","success");},title:"Reset All Cert Data?",msg:"This clears notes, sessions, and objectives for all certifications."}),style:btnS("#ef4444")},"Reset Cert Data")
-      )
-    ),
-    h(ConfirmDialog,{open:!!confirm,title:confirm?.title,message:confirm?.msg,danger:true,onConfirm:()=>{confirm?.action();setConfirm(null);},onCancel:()=>setConfirm(null)})
-  );
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  MAIN APP
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════════ */
 function App(){
-  const [page,setPage]=useState("dashboard");
-  const [certId,setCertId]=useState("netplus");
-  const [toastMsg,setToastMsg]=useState("");
-  const [toastType,setToastType]=useState("info");
-  const [,forceRender]=useState(0);
+  const[page,setPage]=useState("dashboard");
+  const[certId,setCertId]=useState("netplus");
+  const[toastMsg,setToastMsg]=useState("");const[toastType,setToastType]=useState("info");
+  const[refreshTick,forceRender]=useState(0);
+  const[aiOpen,setAiOpen]=useState(false);
+  const[aiContext,setAiContext]=useState(null);
   const toastTimer=useRef(null);
 
-  const toast=(msg,type)=>{clearTimeout(toastTimer.current);setToastMsg(msg);setToastType(type||"info");toastTimer.current=setTimeout(()=>setToastMsg(""),3000);};
-  const nav=(pg,id)=>{setPage(pg);if(id)setCertId(id);window.scrollTo(0,0);};
-  const refresh=()=>forceRender(n=>n+1);
+  const toast=useCallback((msg,type)=>{clearTimeout(toastTimer.current);setToastMsg(msg);setToastType(type||"info");toastTimer.current=setTimeout(()=>setToastMsg(""),3000)},[]);
+  const nav=useCallback((pg,id)=>{setPage(pg);if(id)setCertId(id);window.scrollTo(0,0)},[]);
+  const refresh=useCallback(()=>forceRender(n=>n+1),[]);
 
-  const navItems=[
-    {id:"dashboard",icon:"\uD83D\uDCCA",label:"Dashboard"},
-    {id:"cards",icon:"\uD83C\uDCCF",label:"Cards"},
-    {id:"vlog",icon:"\uD83D\uDCDD",label:"Vlog"},
-    {id:"journal",icon:"\uD83D\uDCD3",label:"Journal"},
+  useEffect(()=>{
+    const bump=()=>forceRender(n=>n+1);
+    const onStorage=e=>{if(e.key&&String(e.key).startsWith("studyhub:"))bump();};
+    window.addEventListener("studyhub:changed",bump);
+    window.addEventListener("storage",onStorage);
+    return ()=>{window.removeEventListener("studyhub:changed",bump);window.removeEventListener("storage",onStorage);};
+  },[]);
+
+  const openExplain=useCallback((card)=>{setAiContext({explain:card});setAiOpen(true)},[]);
+
+  const navItems=useMemo(()=>[
+    {id:"dashboard",icon:"📊",label:"Dashboard"},
+    {id:"cards",icon:"🃏",label:"Cards"},
+    {id:"vlog",icon:"📝",label:"Vlog"},
+    {id:"journal",icon:"📓",label:"Journal"},
+    {id:"blog",icon:"📰",label:"Blog"},
     ...Object.values(CERTS).map(c=>({id:"cert:"+c.id,icon:c.emoji,label:c.title,certId:c.id})),
-    {id:"settings",icon:"\u2699\uFE0F",label:"Settings"}
-  ];
+    {id:"settings",icon:"⚙️",label:"Settings"},
+    {id:"learning-projects",icon:"🧪",label:"Projects"}
+  ],[]);
   const activePage=page==="cert"?"cert:"+certId:page;
 
   return h("div",{style:{minHeight:"100vh"}},
-    // Nav
-    h("nav",{style:{position:"sticky",top:0,zIndex:100,background:"rgba(10,14,26,0.85)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.06)",padding:"0 16px"}},
-      h("div",{style:{maxWidth:960,margin:"0 auto",display:"flex",gap:2,overflowX:"auto",paddingBottom:1}},
-        navItems.map(n=>{
-          const active=activePage===n.id;
-          return h("button",{key:n.id,onClick:()=>n.certId?nav("cert",n.certId):nav(n.id),style:{
-            padding:"12px 14px",background:active?"rgba(255,255,255,0.08)":"transparent",border:"none",
-            borderBottom:active?"2px solid #3b82f6":"2px solid transparent",
-            color:active?"#fff":"rgba(255,255,255,0.5)",fontWeight:active?700:500,
-            fontSize:13,cursor:"pointer",whiteSpace:"nowrap",transition:"all 0.15s",
-            display:"flex",alignItems:"center",gap:5
-          }},h("span",{style:{fontSize:14}},n.icon)," ",n.label);
-        })
-      )
-    ),
-    // Content
-    h("main",{style:{maxWidth:960,margin:"0 auto",padding:"20px 16px 80px"}},
-      page==="dashboard" && h(Dashboard,{nav,toast}),
-      page==="cards" && h(CardsPage,{toast}),
-      page==="vlog" && h(VlogPage,{toast,refresh}),
-      page==="journal" && h(JournalPage,{toast}),
-      page==="cert" && h(CertPage,{certId,toast}),
-      page==="settings" && h(SettingsPage,{toast})
-    ),
-    h(Toast,{message:toastMsg,type:toastType})
-  );
+    h("nav",{className:"app-nav","aria-label":"Main navigation"},
+      h("div",{className:"nav-inner"},navItems.map(n=>h("button",{key:n.id,onClick:()=>n.certId?nav("cert",n.certId):nav(n.id),className:cn("nav-btn",activePage===n.id&&"active"),"aria-current":activePage===n.id?"page":undefined},
+        h("span",{className:"nav-icon","aria-hidden":"true"},n.icon),h("span",{className:"nav-label"}," "+n.label))))),
+    h("main",{className:"app-main"},
+      page==="dashboard"&&h(Dashboard,{nav,toast,refreshTick}),
+      page==="cards"&&h(CardsPage,{toast,onExplain:openExplain}),
+      page==="vlog"&&h(VlogPage,{toast,refresh,refreshTick}),
+      page==="journal"&&h(JournalPage,{toast,onExplain:openExplain,refreshTick}),
+      page==="blog"&&h(BlogPage,{nav,toast}),
+      page==="cert"&&h(CertPage,{certId,toast}),
+      page==="settings"&&h(SettingsPage,{toast}),
+      page==="learning-projects"&&h(LearningProjectsPage,{nav,toast})),
+    // AI FAB
+    !aiOpen&&h("button",{onClick:()=>setAiOpen(true),className:"ai-fab","aria-label":"Open AI Tutor"},h("span",{"aria-hidden":"true"},"🤖")),
+    // AI Panel
+    h(AIPanel,{open:aiOpen,onClose:()=>setAiOpen(false),context:aiContext}),
+    h(Toast,{message:toastMsg,type:toastType}));
 }
 
-// Mount
 ReactDOM.createRoot(document.getElementById("root")).render(h(React.StrictMode,null,h(App)));
-  </script>
+</script>
 </body>
 </html>

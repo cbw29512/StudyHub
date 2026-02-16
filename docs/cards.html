@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Study Hub - Cards</title>
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <script defer src="./assets/js/common.js"></script>
+  <script defer src="./assets/js/cards.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a href="./index.html">Dashboard</a>
+      <a href="./cards.html">Cards</a>
+      <a href="./vlog.html">Vlog</a>
+      <a href="./journal.html">Journal</a>
+      <a href="./netplus.html">Net+</a>
+      <a href="./secplus.html">Sec+</a>
+      <a href="./secai.html">SecAI</a>
+      <span class="spacer"></span>
+      <button id="btnExportAll">Backup Export</button>
+    </div>
+
+    <div class="cardBox">
+      <h1>Flashcards</h1>
+      <div class="note">
+        Click the card to flip. Mark Correct/Wrong — either way you’ll see Answer + Why and it goes to the back.
+      </div>
+    </div>
+
+    <h2>Deck</h2>
+    <div class="cardBox">
+      <div class="row">
+        <label class="pill">Choose deck:
+          <select id="deckSelect"></select>
+        </label>
+        <button id="btnShuffle" class="warn">Shuffle: OFF</button>
+        <button id="btnResetDeck" class="warn">Reset progress</button>
+        <span class="spacer"></span>
+        <input id="fileImport" type="file" accept=".json,.txt" />
+        <button id="btnLoadExample">Load example deck</button>
+      </div>
+      <div class="note" style="margin-top:10px;">
+        Import format:
+        - JSON: [{ "q":"...", "a":"...", "why":"..." }, ...]
+        - TXT: cards separated by a blank line. First line = question, second line = answer, remaining lines = why.
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="statCard">
+        <div class="statTitle">Deck size</div>
+        <div id="deckSize" class="statBig">0</div>
+      </div>
+      <div class="statCard">
+        <div class="statTitle">Correct</div>
+        <div id="correct" class="statBig">0</div>
+      </div>
+      <div class="statCard">
+        <div class="statTitle">Wrong</div>
+        <div id="wrong" class="statBig">0</div>
+      </div>
+    </div>
+
+    <div class="flipWrap">
+      <div id="card" class="flashCard" title="Click to flip"></div>
+      <div id="banner" class="banner" style="display:none;"></div>
+      <div class="row" style="margin-top:10px; justify-content:center;">
+        <button id="btnCorrect" class="good">Correct</button>
+        <button id="btnWrong" class="bad">Wrong</button>
+        <button id="btnNext">Next</button>
+      </div>
+      <div class="note" style="text-align:center; margin-top:8px;">
+        Buttons work when flipped (so you’ve seen the answer + why).
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+<div id="deck-builder-mount"></div>
+<script src="./js/deck-builder.js" defer></script>
+</body>
+</html>
