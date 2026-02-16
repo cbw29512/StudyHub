@@ -5,26 +5,32 @@
                       "id":  "netplus",
                       "name":  "CompTIA Network+",
                       "exam":  "N10-009",
+                      "seriesCode":  "N10-009",
                       "domains":  [
                                       {
+                                          "name":  "Networking concepts",
                                           "id":  "d1",
-                                          "name":  "Networking Fundamentals"
+                                          "weightPercent":  21
                                       },
                                       {
+                                          "name":  "Network implementation",
                                           "id":  "d2",
-                                          "name":  "Network Implementations"
+                                          "weightPercent":  19
                                       },
                                       {
+                                          "name":  "Network operations",
                                           "id":  "d3",
-                                          "name":  "Network Operations"
+                                          "weightPercent":  16
                                       },
                                       {
+                                          "name":  "Network security",
                                           "id":  "d4",
-                                          "name":  "Network Security"
+                                          "weightPercent":  14
                                       },
                                       {
+                                          "name":  "Network troubleshooting",
                                           "id":  "d5",
-                                          "name":  "Network Troubleshooting"
+                                          "weightPercent":  30
                                       }
                                   ]
                   },
@@ -32,49 +38,61 @@
                       "id":  "secplus",
                       "name":  "CompTIA Security+",
                       "exam":  "SY0-701",
+                      "seriesCode":  "SY0-701",
                       "domains":  [
                                       {
+                                          "name":  "General Security Concepts",
                                           "id":  "d1",
-                                          "name":  "General Security Concepts"
+                                          "weightPercent":  12
                                       },
                                       {
+                                          "name":  "Threats, Vulnerabilities, and Mitigations",
                                           "id":  "d2",
-                                          "name":  "Threats, Vulnerabilities, and Mitigations"
+                                          "weightPercent":  22
                                       },
                                       {
+                                          "name":  "Security Architecture",
                                           "id":  "d3",
-                                          "name":  "Security Architecture"
+                                          "weightPercent":  18
                                       },
                                       {
+                                          "name":  "Security Operations",
                                           "id":  "d4",
-                                          "name":  "Security Operations"
+                                          "weightPercent":  28
                                       },
                                       {
+                                          "name":  "Security Program Management and Oversight",
                                           "id":  "d5",
-                                          "name":  "Security Program Management and Oversight"
+                                          "weightPercent":  20
                                       }
                                   ]
                   },
                   {
                       "id":  "security_ai",
-                      "name":  "Security AI",
-                      "exam":  "",
+                      "name":  "CompTIA SecAI+",
+                      "exam":  "CY0-001",
+                      "seriesCode":  "CY0-001",
+                      "launchDate":  "2026-02-17",
                       "domains":  [
                                       {
+                                          "name":  "Basic AI concepts related to cybersecurity",
                                           "id":  "d1",
-                                          "name":  "AI Fundamentals"
+                                          "weightPercent":  17
                                       },
                                       {
+                                          "name":  "Securing AI systems",
                                           "id":  "d2",
-                                          "name":  "AI for Detection"
+                                          "weightPercent":  40
                                       },
                                       {
+                                          "name":  "AI-assisted security",
                                           "id":  "d3",
-                                          "name":  "AI for Response"
+                                          "weightPercent":  24
                                       },
                                       {
+                                          "name":  "AI governance, risk, and compliance",
                                           "id":  "d4",
-                                          "name":  "Governance \u0026 Ethics"
+                                          "weightPercent":  19
                                       }
                                   ]
                   },
