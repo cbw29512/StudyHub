@@ -1,0 +1,14 @@
+[
+  {
+    "id": "welcome",
+    "title": "My Microsoft Certification Journey",
+    "date": "2026-02-15",
+    "certId": "all",
+    "tags": [
+      "microsoft",
+      "journey",
+      "notes"
+    ],
+    "content": "Welcome! This is my public journal and proof-of-work log.\n\n\u2705 What you'll find here\n- Weekly progress updates\n- Study strategies that worked (and didn't)\n- Practice lab notes and screenshots\n- Links to artifacts (notes, cheat sheets, mini-projects)\n\n\ud83d\udcac Discussion\nUse the comments section below to ask questions or challenge an answer.\nPlease keep it constructive \u2014 we're all here to learn."
+  }
+]

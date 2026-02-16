@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Learning Projects</title>
+  <style>
+    :root{
+      --bg: transparent;
+      --panel: rgba(255,255,255,.04);
+      --panel2: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --muted2: rgba(255,255,255,.45);
+      --accent: #60a5fa;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad:  #ef4444;
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0; background: var(--bg); color: var(--text);
+      font-family: var(--sans);
+    }
+
+    .wrap{max-width:1100px; margin:0 auto; padding:16px}
+    .top{
+      display:flex; gap:12px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap;
+      padding:12px; border:1px solid var(--border); border-radius: var(--radius);
+      background: rgba(10,14,26,.55);
+    }
+    .title{font-weight:900; font-size:18px; margin:0}
+    .sub{margin:6px 0 0; color:var(--muted); font-size:13px}
+    .meta{color:var(--muted2); font-size:12px; font-family:var(--mono)}
+    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .input, .sel{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      outline: none;
+      font-size: 13px;
+    }
+    .input{min-width:260px}
+    .pill{
+      border:1px solid var(--border); background: rgba(255,255,255,.05);
+      padding:6px 10px; border-radius:999px; font-size:12px; color:var(--muted);
+      display:inline-flex; gap:6px; align-items:center;
+    }
+
+    .section{margin-top:14px}
+    .sectionHead{
+      display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      padding:12px 8px 6px;
+    }
+    .sectionTitle{font-size:14px; font-weight:900; margin:0}
+    .sectionSub{margin:4px 0 0; color:var(--muted); font-size:12px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .card{
+      border:1px solid var(--border);
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 14px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .card:hover{transform: translateY(-1px); background: var(--panel2); border-color: rgba(255,255,255,.16)}
+    .cardTitle{font-weight:900; margin:0; font-size:15px}
+    .cardDesc{margin:8px 0 0; color:var(--muted); font-size:13px; line-height:1.35}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px}
+    .tag{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted)}
+    .status{
+      font-size:11px; padding:4px 8px; border-radius:999px; font-weight:800;
+      border:1px solid var(--border);
+    }
+    .status.active{color: var(--good); background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.25)}
+    .status.planned{color: var(--warn); background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.25)}
+    .status.archived{color: var(--bad); background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.25)}
+
+    .links{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+    .btn{
+      display:inline-flex; gap:8px; align-items:center; text-decoration:none;
+      padding:8px 10px; border-radius:12px; border:1px solid var(--border);
+      background: rgba(255,255,255,.06); color: var(--text); font-size:12px; font-weight:800;
+    }
+    .btn:hover{border-color: rgba(96,165,250,.35)}
+    .btn.primary{border-color: rgba(96,165,250,.35); background: rgba(96,165,250,.10)}
+    .warnBox{
+      margin-top:12px; border:1px dashed rgba(255,255,255,.18);
+      border-radius: var(--radius); padding:12px; color: var(--muted); font-size:12px;
+    }
+    .warnBox code{font-family:var(--mono); color: rgba(255,255,255,.8)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1 class="title">🧪 Learning Projects</h1>
+        <div class="sub">This page renders the “cards” shown inside StudyHub’s Projects tab.</div>
+        <div class="meta" id="meta"></div>
+      </div>
+      <div class="controls">
+        <input id="q" class="input" placeholder="Search projects…" />
+        <select id="tag" class="sel"><option value="">All tags</option></select>
+        <select id="status" class="sel">
+          <option value="">All status</option>
+          <option value="active">Active</option>
+          <option value="planned">Planned</option>
+          <option value="archived">Archived</option>
+        </select>
+        <span class="pill" id="countPill">0 items</span>
+      </div>
+    </div>
+
+    <div id="content"></div>
+
+    <div class="warnBox">
+      Edit <code>learning-projects.json</code> to add/remove cards. Each card supports: <code>title</code>, <code>description</code>, <code>status</code>, <code>tags[]</code>, and <code>links[]</code>.
+    </div>
+  </div>
+
+<script>
+(function(){
+  const el = id => document.getElementById(id);
+
+  const state = { data:null, flat:[], tags:new Set() };
+
+  function norm(s){ return (s||"").toString().toLowerCase().trim(); }
+
+  function flatten(json){
+    const out = [];
+    const sections = Array.isArray(json.sections) ? json.sections : [{ title:"Projects", items: (json.projects||json.items||[]) }];
+    sections.forEach(sec => {
+      (sec.items||[]).forEach(item => {
+        const tags = Array.isArray(item.tags) ? item.tags : [];
+        tags.forEach(t => state.tags.add(t));
+        out.push({ sectionTitle: sec.title || "Projects", sectionSubtitle: sec.subtitle || "", ...item, tags });
+      });
+    });
+    return out;
+  }
+
+  function render(){
+    const q = norm(el("q").value);
+    const tag = el("tag").value;
+    const status = el("status").value;
+
+    const filtered = state.flat.filter(x => {
+      if (status && norm(x.status) !== status) return false;
+      if (tag && !(x.tags||[]).includes(tag)) return false;
+      if (!q) return true;
+      const blob = norm([x.sectionTitle, x.title, x.description, (x.tags||[]).join(" "), (x.links||[]).map(l=>l.label+" "+l.url).join(" ")].join(" "));
+      return blob.includes(q);
+    });
+
+    el("countPill").textContent = `${filtered.length} item${filtered.length===1?"":"s"}`;
+
+    const bySection = new Map();
+    filtered.forEach(x => {
+      const key = x.sectionTitle || "Projects";
+      if (!bySection.has(key)) bySection.set(key, { subtitle: x.sectionSubtitle || "", items: [] });
+      bySection.get(key).items.push(x);
+    });
+
+    const host = el("content");
+    host.innerHTML = "";
+
+    if (!filtered.length){
+      host.innerHTML = `<div class="section"><div class="warnBox">No matches. Try clearing filters/search.</div></div>`;
+      return;
+    }
+
+    for (const [secTitle, sec] of bySection.entries()){
+      const secWrap = document.createElement("div");
+      secWrap.className = "section";
+      secWrap.innerHTML = `
+        <div class="sectionHead">
+          <div>
+            <div class="sectionTitle">${escapeHtml(secTitle)}</div>
+            ${sec.subtitle ? `<div class="sectionSub">${escapeHtml(sec.subtitle)}</div>` : ``}
+          </div>
+        </div>
+        <div class="grid"></div>
+      `;
+      const grid = secWrap.querySelector(".grid");
+
+      sec.items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const st = norm(item.status);
+        const statusClass = (st==="active"||st==="planned"||st==="archived") ? st : "";
+        const statusLabel = item.status ? item.status : "active";
+
+        const tagsHtml = (item.tags||[]).slice(0,8).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+        const links = Array.isArray(item.links) ? item.links : [];
+        const linksHtml = links.map((l,i) => {
+          const primary = i===0 ? "primary" : "";
+          return `<a class="btn ${primary}" href="${escapeAttr(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.label||"Open")}</a>`;
+        }).join("");
+
+        card.innerHTML = `
+          <div class="row" style="justify-content:space-between">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="cardTitle">${escapeHtml(item.title || "Untitled")}</div>
+              <span class="status ${statusClass}">${escapeHtml(statusLabel)}</span>
+            </div>
+          </div>
+
+          ${item.description ? `<div class="cardDesc">${escapeHtml(item.description)}</div>` : ``}
+
+          <div class="row">${tagsHtml}</div>
+
+          ${linksHtml ? `<div class="links">${linksHtml}</div>` : ``}
+        `;
+        grid.appendChild(card);
+      });
+
+      host.appendChild(secWrap);
+    }
+  }
+
+  function escapeHtml(str){
+    return (str||"").toString().replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+  function escapeAttr(str){
+    return escapeHtml(str).replace(/"/g, "&quot;");
+  }
+
+  async function load(){
+    try{
+      const res = await fetch("./learning-projects.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      state.data = json;
+      state.flat = flatten(json);
+
+      // fill tags dropdown
+      const tags = Array.from(state.tags).sort((a,b)=>a.localeCompare(b));
+      const sel = el("tag");
+      tags.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t; opt.textContent = t;
+        sel.appendChild(opt);
+      });
+
+      el("meta").textContent = json.updated ? ("Data updated: " + json.updated) : "";
+      render();
+    }catch(err){
+      el("meta").textContent = "Failed to load learning-projects.json (" + err.message + ")";
+      el("content").innerHTML = `
+        <div class="section">
+          <div class="warnBox">
+            Could not load <code>learning-projects.json</code>.
+            Make sure both files exist next to StudyHub’s <code>index.html</code> and that you are using <code>py -m http.server</code>.
+          </div>
+        </div>`;
+    }
+  }
+
+  ["q","tag","status"].forEach(id => el(id).addEventListener("input", render));
+  load();
+})();
+</script>
+</body>
+</html>
