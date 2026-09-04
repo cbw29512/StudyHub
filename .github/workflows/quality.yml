@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   quality:
@@ -15,60 +15,8 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout exact PR branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-
-      - name: Vendor pinned Preact runtime on hardening branch
-        if: github.event_name == 'pull_request' && github.head_ref == 'release/public-hardening' && github.event.pull_request.head.repo.full_name == github.repository
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -q 'https://esm.sh/preact@10.29.8' index.html; then
-            rm -rf /tmp/studyhub-preact node_modules package-lock.json package.json
-            npm init -y >/dev/null
-            npm install --ignore-scripts --no-save preact@10.29.8
-            mkdir -p vendor
-            cp node_modules/preact/dist/preact.mjs vendor/preact.mjs
-            cp node_modules/preact/hooks/dist/hooks.mjs vendor/hooks.mjs
-            cp node_modules/preact/LICENSE vendor/PREACT-LICENSE.txt
-            python - <<'PY'
-          from pathlib import Path
-
-          hooks = Path('vendor/hooks.mjs')
-          source = hooks.read_text(encoding='utf-8')
-          old = 'from"preact"'
-          if old not in source:
-              raise SystemExit('Pinned hooks module no longer imports expected bare preact specifier')
-          hooks.write_text(source.replace(old, 'from"./preact.mjs"', 1), encoding='utf-8')
-
-          page = Path('index.html')
-          text = page.read_text(encoding='utf-8')
-          replacements = {
-              'from "https://esm.sh/preact@10.29.8?target=es2022"': 'from "./vendor/preact.mjs"',
-              'from "https://esm.sh/preact@10.29.8/hooks?target=es2022"': 'from "./vendor/hooks.mjs"',
-          }
-          for old, new in replacements.items():
-              if text.count(old) != 1:
-                  raise SystemExit(f'Expected exactly one import to replace: {old}')
-              text = text.replace(old, new, 1)
-          page.write_text(text, encoding='utf-8')
-          PY
-            rm -rf node_modules package-lock.json package.json
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add index.html vendor
-            git commit -m 'perf: vendor pinned Preact runtime locally'
-            git push origin HEAD:release/public-hardening
-          else
-            test -f vendor/preact.mjs
-            test -f vendor/hooks.mjs
-            test -f vendor/PREACT-LICENSE.txt
-            grep -q 'from "./vendor/preact.mjs"' index.html
-            grep -q 'from "./vendor/hooks.mjs"' index.html
-            echo 'Pinned Preact runtime already vendored.'
-          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
