@@ -1,0 +1,80 @@
+name: StudyHub Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate local links and static assets
+        run: python scripts/validate_site.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install accessibility and Lighthouse tooling
+        run: npm install --global pa11y-ci lighthouse http-server
+
+      - name: Start static server
+        run: |
+          http-server . -p 4173 -c-1 > /tmp/studyhub-http.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/index.html >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/studyhub-http.log
+          exit 1
+
+      - name: WCAG accessibility scan
+        run: pa11y-ci --config .pa11yci.json
+
+      - name: Mobile Lighthouse
+        run: |
+          lighthouse http://127.0.0.1:4173/index.html \
+            --quiet \
+            --chrome-flags='--headless --no-sandbox' \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json \
+            --output-path=mobile-lighthouse.json
+
+      - name: Desktop Lighthouse
+        run: |
+          lighthouse http://127.0.0.1:4173/index.html \
+            --quiet \
+            --preset=desktop \
+            --chrome-flags='--headless --no-sandbox' \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json \
+            --output-path=desktop-lighthouse.json
+
+      - name: Require Lighthouse 100/100/100/100
+        run: python scripts/assert_lighthouse.py mobile-lighthouse.json desktop-lighthouse.json
+
+      - name: Upload Lighthouse reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: '*-lighthouse.json'
+          if-no-files-found: ignore

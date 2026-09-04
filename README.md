@@ -1,27 +1,58 @@
 # StudyHub
 
-<!-- DECK_BUILDER_SECTION_START -->
-## Deck Builder (Fast Import)
+StudyHub is a browser-based study workspace for certification prep, flashcards, notes, study sessions, journals, and learning projects. It is designed to stay lightweight: no account is required for the core experience and study data can remain in the browser.
 
-This project includes a lightweight **Deck Builder** that lets you generate study cards fast without hand-typing each one.
+## What it includes
 
-### How it works
-- The certificate structure lives in: `decks/cert-catalog.json`
-- The Deck Builder UI lives in: `js/deck-builder.js`
-- The Cards page loads it automatically (patched into `cards.html`)
+- Certification-focused study dashboards
+- Flashcards and custom deck building
+- Fast topic import for creating study cards
+- Study-session tracking
+- Journal and notes workflows
+- Learning-project tracking
+- Local browser storage for user-created study data
+- Static-site architecture that can be hosted without a backend
 
-### Using the Deck Builder
-1. Open the **Cards** tab in the site.
-2. Choose a **Certificate** and **Domain**.
-3. Paste topics **one per line** (copy/paste from exam objectives or your notes).
-4. Click **Preview**.
-5. Click **Save to browser (local)** to store your generated cards in localStorage.
-6. Optional: click **Export JSON** to download a deck file you can commit into `decks/` later.
+## Privacy model
 
-### Why this is the simplest workflow
-- No accounts needed
-- No database needed
-- You can build decks from **any source** (official objectives PDF, class notes, your own outline)
-- Export is there when you want “real files” in GitHub
+StudyHub is intentionally local-first. Core study data is stored in the browser rather than sent to a StudyHub account or database. Clearing browser storage can remove locally saved data, so export anything you need to preserve.
 
-<!-- DECK_BUILDER_SECTION_END -->
+Do not paste passwords, API keys, private employer information, regulated data, or other sensitive material into study notes or imported decks.
+
+## Deck Builder
+
+The Deck Builder lets you create study cards without hand-typing every card.
+
+1. Open the **Cards** section.
+2. Choose a certificate and domain.
+3. Paste topics one per line.
+4. Preview the generated cards.
+5. Save them locally in the browser.
+6. Export JSON when you want a portable deck file.
+
+The certificate catalog is in `decks/cert-catalog.json` and the Deck Builder logic is in `js/deck-builder.js`.
+
+## Current status
+
+**Public beta / active development.** The application is useful now, but production hardening is still in progress. Before calling the project fully release-certified, the repository should have automated accessibility, broken-link, mobile/desktop performance, and production smoke gates.
+
+## Public-release checklist
+
+- No secrets or private study data committed to the repository
+- Broken-link and static-asset validation
+- WCAG accessibility checks
+- Mobile and desktop regression tests
+- Lighthouse performance/accessibility/best-practices/SEO checks
+- Clear local-storage/export behavior
+- Security-header verification on the production host
+- Public deployment smoke test
+
+## Support
+
+If StudyHub is useful to you, you can support continued development here:
+
+**Buy Me a Coffee:** https://buymeacoffee.com/divclass016
+
+## Security
+
+See `SECURITY.md` for the project security and privacy expectations.

@@ -34,19 +34,23 @@
         <label class="pill">Cert:
           <select id="certSelect"></select>
         </label>
-        <input id="title" type="text" placeholder="Title (short)" style="flex:1;" />
-        <input id="tags" type="text" placeholder="Tags (comma-separated)" style="flex:1;" />
+        <label for="title" class="sr-only">Note title</label>
+        <input id="title" type="text" placeholder="Title (short)" aria-label="Note title" style="flex:1;" />
+        <label for="tags" class="sr-only">Note tags</label>
+        <input id="tags" type="text" placeholder="Tags (comma-separated)" aria-label="Note tags" style="flex:1;" />
         <button id="btnAdd">Add</button>
       </div>
       <div class="row" style="margin-top:10px;">
-        <textarea id="body" placeholder="Write the note here..."></textarea>
+        <label for="body" class="sr-only">Note body</label>
+        <textarea id="body" placeholder="Write the note here..." aria-label="Note body"></textarea>
       </div>
     </div>
 
     <h2>Search</h2>
     <div class="cardBox">
       <div class="row">
-        <input id="search" type="text" placeholder="Search title/body/tags..." style="flex:1;" />
+        <label for="search" class="sr-only">Search notes</label>
+        <input id="search" type="text" placeholder="Search title/body/tags..." aria-label="Search notes" style="flex:1;" />
         <label class="pill">Cert:
           <select id="filterCert">
             <option value="all" selected>All</option>

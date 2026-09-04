@@ -6,9 +6,9 @@
   <meta name="description" content="Study Hub — AI-powered flashcard study system for CompTIA and security certifications" />
   <title>Study Hub</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+  <link rel="preconnect" href="https://esm.sh" crossorigin />
+  <link rel="dns-prefetch" href="//esm.sh" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
     :root {
       --bg:#0a0e1a; --surface:rgba(255,255,255,0.04); --surface-2:rgba(255,255,255,0.06);
       --surface-3:rgba(255,255,255,0.08); --border:rgba(255,255,255,0.07); --border-2:rgba(255,255,255,0.10);
@@ -18,7 +18,7 @@
       --red:#ef4444; --red-soft:rgba(239,68,68,0.15); --red-border:rgba(239,68,68,0.25);
       --amber:#f59e0b; --purple:#a855f7; --cyan:#06b6d4;
       --r-sm:6px; --r:10px; --r-lg:12px; --r-xl:14px; --r-2xl:16px; --r-3xl:20px; --r-pill:999px;
-      --font:'Outfit',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+      --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     }
 
     *,*::before,*::after{box-sizing:border-box;margin:0}
@@ -58,7 +58,7 @@
     /* Stat */
     .stat-card{display:flex;align-items:center;gap:12px;flex:1;min-width:130px}
     .stat-icon{width:42px;height:42px;border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-    .stat-label{font-size:12px;opacity:.5;font-weight:600} .stat-value{font-size:20px;font-weight:800}
+    .stat-label{font-size:12px;opacity:.58;font-weight:600} .stat-value{font-size:20px;font-weight:800}
 
     /* Buttons */
     .btn{padding:6px 14px;border-radius:var(--r);border:1px solid;color:var(--text-2);font-weight:700;font-size:13px;cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px}
@@ -202,7 +202,7 @@
     .text-xs{font-size:11px}.text-sm{font-size:12px}.text-base{font-size:14px}.text-lg{font-size:15px}
     .text-xl{font-size:18px}.text-2xl{font-size:20px}.text-3xl{font-size:24px}.text-4xl{font-size:26px}
     .fw-6{font-weight:600}.fw-7{font-weight:700}.fw-8{font-weight:800}.fw-9{font-weight:900}
-    .o-40{opacity:.4}.o-50{opacity:.5}.o-60{opacity:.6}.o-70{opacity:.7}.o-85{opacity:.85}
+    .o-40{opacity:.4}.o-50{opacity:.58}.o-60{opacity:.6}.o-70{opacity:.7}.o-85{opacity:.85}
     .lh-snug{line-height:1.45}.lh-relaxed{line-height:1.6}
     .mono{font-family:var(--mono)}.surface-s{background:rgba(255,255,255,.03)}
     .p-12{padding:12px}.r-10{border-radius:var(--r)}.w-full{width:100%}
@@ -249,12 +249,14 @@
 </style>
 </head>
 <body>
-<div class="version-badge" aria-hidden="true">v4.0.0</div>
-<div id="root"></div>
+<div class="version-badge" aria-hidden="true">v4.1.0</div>
+<div id="root"><div aria-hidden="true"><nav class="app-nav"><div class="nav-inner"><span class="nav-btn active"><span class="nav-icon">📊</span><span class="nav-label"> Dashboard</span></span><span class="nav-btn"><span class="nav-icon">🃏</span><span class="nav-label"> Cards</span></span><span class="nav-btn"><span class="nav-icon">📝</span><span class="nav-label"> Vlog</span></span></div></nav><main class="app-main"><div class="mb-24"><h1 class="fw-8 text-4xl">Study Hub <span class="pill" style="vertical-align:middle">v4.1.0</span></h1><p class="text-base o-60 mt-6">Your local-first certification study workspace.</p></div><div class="stats-row mb-16"><div class="card stat-card"><div class="stat-icon">🔥</div><div><div class="stat-label">Streak</div><div class="stat-value">0 days</div></div></div><div class="card stat-card"><div class="stat-icon">⏱️</div><div><div class="stat-label">Today</div><div class="stat-value">0 min</div></div></div><div class="card stat-card"><div class="stat-icon">📊</div><div><div class="stat-label">This Week</div><div class="stat-value">0 min</div></div></div></div><div class="card mb-16" style="min-height:141px"><div class="card-header"><h2 class="card-title">Weekly Activity</h2></div></div></main></div></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-<script>
+<script type="module">
+import { createElement, Fragment, render } from "https://esm.sh/preact@10.29.8?target=es2022";
+import { useState as preactUseState, useEffect as preactUseEffect, useCallback as preactUseCallback, useRef as preactUseRef, useMemo as preactUseMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
+const React={createElement,StrictMode:Fragment,useState:preactUseState,useEffect:preactUseEffect,useCallback:preactUseCallback,useRef:preactUseRef,useMemo:preactUseMemo};
+const ReactDOM={createRoot:(node)=>({render:(vnode)=>render(vnode,node)})};
 "use strict";
 const APP_VERSION="v4.1.0";
 const h=React.createElement;
@@ -399,7 +401,7 @@ function WeekChart({activity}){
   return h("div",{className:"wk-chart",role:"img","aria-label":"Weekly study minutes chart"},
     days.map(d=>h("div",{key:d.key,className:"wk-col"},
       h("span",{className:"text-xs fw-7 o-70"},d.mins>0?d.mins:""),
-      h("div",{className:"wk-bar",style:{height:Math.max(4,(d.mins/max)*60),background:d.mins>0?"linear-gradient(to top,#3b82f6,#60a5fa)":"var(--surface-2)"},"aria-label":d.label+": "+d.mins+" minutes"}),
+      h("div",{className:"wk-bar",style:{height:Math.max(4,(d.mins/max)*60),background:d.mins>0?"linear-gradient(to top,#3b82f6,#60a5fa)":"var(--surface-2)"},"aria-hidden":"true"}),
       h("span",{className:"text-xs o-50"},d.label))));
 }
 
@@ -538,7 +540,7 @@ function Dashboard({nav,toast,refreshTick}){
       h(StatCard,{label:"Wrong Answers",value:journal.filter(e=>!e.archived).length,icon:"📓",accent:"#ef4444"})),
     h(Card,{title:"Weekly Activity",className:"mb-16"},h(WeekChart,{activity})),
     h("div",{className:"grid-auto mb-16"},
-      certStats.map(c=>h("div",{key:c.id,onClick:()=>nav("cert",c.id),className:"card cert-card",style:{borderLeftColor:c.color},role:"button",tabIndex:0,"aria-label":"Open "+c.title,onKeyDown:e=>{if(e.key==="Enter")nav("cert",c.id)}},
+      certStats.map(c=>h("div",{key:c.id,onClick:()=>nav("cert",c.id),className:"card cert-card",style:{borderLeftColor:c.color},role:"button",tabIndex:0,onKeyDown:e=>{if(e.key==="Enter")nav("cert",c.id)}},
         h("div",{className:"flex items-center gap-10"},
           c.total>0?h(ProgressRing,{pct:(c.done/c.total)*100,size:56,stroke:5,color:c.color}):h("div",{className:"cert-icon",style:{background:c.color+"15"}},c.emoji),
           h("div",null,h("div",{className:"fw-8 text-lg"},c.emoji+" "+c.title),
@@ -1291,7 +1293,7 @@ function App(){
 
   return h("div",{style:{minHeight:"100vh"}},
     h("nav",{className:"app-nav","aria-label":"Main navigation"},
-      h("div",{className:"nav-inner"},navItems.map(n=>h("button",{key:n.id,onClick:()=>n.certId?nav("cert",n.certId):nav(n.id),className:cn("nav-btn",activePage===n.id&&"active"),"aria-current":activePage===n.id?"page":undefined},
+      h("div",{className:"nav-inner"},navItems.map(n=>h("button",{key:n.id,onClick:()=>n.certId?nav("cert",n.certId):nav(n.id),className:cn("nav-btn",activePage===n.id&&"active"),"aria-label":n.label,"aria-current":activePage===n.id?"page":undefined},
         h("span",{className:"nav-icon","aria-hidden":"true"},n.icon),h("span",{className:"nav-label"}," "+n.label))))),
     h("main",{className:"app-main"},
       page==="dashboard"&&h(Dashboard,{nav,toast,refreshTick}),

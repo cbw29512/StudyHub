@@ -108,14 +108,17 @@
   <div class="wrap">
     <div class="top">
       <div>
-        <h1 class="title">ðŸ§ª Learning Projects</h1>
-        <div class="sub">This page renders the â€œcardsâ€ shown inside StudyHubâ€™s Projects tab.</div>
+        <h1 class="title">🧪 Learning Projects</h1>
+        <div class="sub">This page renders the cards shown inside StudyHub’s Projects tab.</div>
         <div class="meta" id="meta"></div>
       </div>
       <div class="controls">
-        <input id="q" class="input" placeholder="Search projectsâ€¦" />
-        <select id="tag" class="sel"><option value="">All tags</option></select>
-        <select id="status" class="sel">
+        <label for="q" style="position:absolute;left:-10000px;">Search projects</label>
+        <input id="q" class="input" placeholder="Search projects…" aria-label="Search projects" />
+        <label for="tag" style="position:absolute;left:-10000px;">Filter projects by tag</label>
+        <select id="tag" class="sel" aria-label="Filter projects by tag"><option value="">All tags</option></select>
+        <label for="status" style="position:absolute;left:-10000px;">Filter projects by status</label>
+        <select id="status" class="sel" aria-label="Filter projects by status">
           <option value="">All status</option>
           <option value="active">Active</option>
           <option value="planned">Planned</option>
@@ -248,7 +251,6 @@
       state.data = json;
       state.flat = flatten(json);
 
-      // fill tags dropdown
       const tags = Array.from(state.tags).sort((a,b)=>a.localeCompare(b));
       const sel = el("tag");
       tags.forEach(t => {
@@ -259,19 +261,14 @@
 
       el("meta").textContent = json.updated ? ("Data updated: " + json.updated) : "";
       render();
-    }catch(err){
-      el("meta").textContent = "Failed to load learning-projects.json (" + err.message + ")";
-      el("content").innerHTML = `
-        <div class="section">
-          <div class="warnBox">
-            Could not load <code>learning-projects.json</code>.
-            Make sure both files exist next to StudyHubâ€™s <code>index.html</code> and that you are using <code>py -m http.server</code>.
-          </div>
-        </div>`;
+    } catch (err) {
+      el("content").innerHTML = `<div class="warnBox">Could not load project data: ${escapeHtml(err.message)}</div>`;
     }
   }
 
-  ["q","tag","status"].forEach(id => el(id).addEventListener("input", render));
+  el("q").addEventListener("input", render);
+  el("tag").addEventListener("change", render);
+  el("status").addEventListener("change", render);
   load();
 })();
 </script>

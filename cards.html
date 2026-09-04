@@ -26,7 +26,7 @@
     <div class="cardBox">
       <h1>Flashcards</h1>
       <div class="note">
-        Click the card to flip. Mark Correct/Wrong â€” either way youâ€™ll see Answer + Why and it goes to the back.
+        Click the card to flip. Mark Correct/Wrong — either way you’ll see Answer + Why and it goes to the back.
       </div>
     </div>
 
@@ -39,7 +39,8 @@
         <button id="btnShuffle" class="warn">Shuffle: OFF</button>
         <button id="btnResetDeck" class="warn">Reset progress</button>
         <span class="spacer"></span>
-        <input id="fileImport" type="file" accept=".json,.txt" />
+        <label for="fileImport" class="sr-only">Import flashcard deck file</label>
+        <input id="fileImport" type="file" accept=".json,.txt" aria-label="Import flashcard deck file" />
         <button id="btnLoadExample">Load example deck</button>
       </div>
       <div class="note" style="margin-top:10px;">
@@ -73,7 +74,7 @@
         <button id="btnNext">Next</button>
       </div>
       <div class="note" style="text-align:center; margin-top:8px;">
-        Buttons work when flipped (so youâ€™ve seen the answer + why).
+        Buttons work when flipped (so you’ve seen the answer + why).
       </div>
     </div>
 
