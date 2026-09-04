@@ -250,9 +250,18 @@
 <div class="version-badge" aria-hidden="true">v4.1.0</div>
 <div id="root"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-<script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/preact@10.29.8/compat",
+    "react-dom/client": "https://esm.sh/preact@10.29.8/compat/client"
+  }
+}
+</script>
+<script type="module">
+import * as React from "react";
+import { createRoot } from "react-dom/client";
+const ReactDOM={createRoot};
 "use strict";
 const APP_VERSION="v4.1.0";
 const h=React.createElement;
