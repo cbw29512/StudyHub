@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   quality:
@@ -15,37 +15,8 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout exact PR branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-
-      - name: Apply first-paint shell on hardening branch
-        if: github.event_name == 'pull_request' && github.head_ref == 'release/public-hardening' && github.event.pull_request.head.repo.full_name == github.repository
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('index.html')
-          text = path.read_text(encoding='utf-8')
-          old = '<div id="root"></div>'
-          new = '''<div id="root"><div aria-hidden="true"><nav class="app-nav"><div class="nav-inner"><span class="nav-btn active"><span class="nav-icon">📊</span><span class="nav-label"> Dashboard</span></span><span class="nav-btn"><span class="nav-icon">🃏</span><span class="nav-label"> Cards</span></span><span class="nav-btn"><span class="nav-icon">📝</span><span class="nav-label"> Vlog</span></span></div></nav><main class="app-main"><div class="mb-24"><h1 class="fw-8 text-4xl">Study Hub <span class="pill" style="vertical-align:middle">v4.1.0</span></h1><p class="text-base o-60 mt-6">Your local-first certification study workspace.</p></div><div class="stats-row mb-16"><div class="card stat-card"><div class="stat-icon">🔥</div><div><div class="stat-label">Streak</div><div class="stat-value">0 days</div></div></div><div class="card stat-card"><div class="stat-icon">⏱️</div><div><div class="stat-label">Today</div><div class="stat-value">0 min</div></div></div><div class="card stat-card"><div class="stat-icon">📊</div><div><div class="stat-label">This Week</div><div class="stat-value">0 min</div></div></div></div><div class="card mb-16" style="min-height:141px"><div class="card-header"><h2 class="card-title">Weekly Activity</h2></div></div></main></div></div>'''
-          if old in text:
-              if text.count(old) != 1:
-                  raise SystemExit('Expected exactly one empty root')
-              path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          elif new not in text:
-              raise SystemExit('Homepage root does not match expected pre- or post-patch state')
-          PY
-          if git diff --quiet -- index.html; then
-            echo 'First-paint shell already applied.'
-          else
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add index.html
-            git commit -m 'perf: paint dashboard shell before Preact loads'
-            git push origin HEAD:release/public-hardening
-          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
