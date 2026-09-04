@@ -250,18 +250,11 @@
 <div class="version-badge" aria-hidden="true">v4.1.0</div>
 <div id="root"></div>
 
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/preact@10.29.8/compat",
-    "react-dom/client": "https://esm.sh/preact@10.29.8/compat/client"
-  }
-}
-</script>
 <script type="module">
-import * as React from "react";
-import { createRoot } from "react-dom/client";
-const ReactDOM={createRoot};
+import { createElement, Fragment, render } from "https://esm.sh/preact@10.29.8?target=es2022";
+import { useState, useEffect, useCallback, useRef, useMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
+const React={createElement,StrictMode:Fragment,useState,useEffect,useCallback,useRef,useMemo};
+const ReactDOM={createRoot:(node)=>({render:(vnode)=>render(vnode,node)})};
 "use strict";
 const APP_VERSION="v4.1.0";
 const h=React.createElement;
