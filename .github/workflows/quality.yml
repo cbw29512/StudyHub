@@ -49,7 +49,7 @@ jobs:
       - name: WCAG accessibility scan
         run: |
           for page in index.html cards.html journal.html learning-projects.html; do
-            pa11y --standard WCAG2AA "http://127.0.0.1:4173/${page}"
+            pa11y --chrome-arg='--no-sandbox' --standard WCAG2AA "http://127.0.0.1:4173/${page}"
           done
 
       - name: Mobile Lighthouse
