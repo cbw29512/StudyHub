@@ -252,8 +252,8 @@
 
 <script type="module">
 import { createElement, Fragment, render } from "https://esm.sh/preact@10.29.8?target=es2022";
-import { useState, useEffect, useCallback, useRef, useMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
-const React={createElement,StrictMode:Fragment,useState,useEffect,useCallback,useRef,useMemo};
+import { useState as preactUseState, useEffect as preactUseEffect, useCallback as preactUseCallback, useRef as preactUseRef, useMemo as preactUseMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
+const React={createElement,StrictMode:Fragment,useState:preactUseState,useEffect:preactUseEffect,useCallback:preactUseCallback,useRef:preactUseRef,useMemo:preactUseMemo};
 const ReactDOM={createRoot:(node)=>({render:(vnode)=>render(vnode,node)})};
 "use strict";
 const APP_VERSION="v4.1.0";
