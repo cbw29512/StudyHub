@@ -18,6 +18,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Export exact homepage source for hardening
+        uses: actions/upload-artifact@v4
+        with:
+          name: studyhub-homepage-source
+          path: index.html
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
