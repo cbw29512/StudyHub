@@ -6,6 +6,8 @@
   <meta name="description" content="Study Hub — AI-powered flashcard study system for CompTIA and security certifications" />
   <title>Study Hub</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+  <link rel="preconnect" href="https://esm.sh" crossorigin />
+  <link rel="dns-prefetch" href="//esm.sh" />
   <style>
     :root {
       --bg:#0a0e1a; --surface:rgba(255,255,255,0.04); --surface-2:rgba(255,255,255,0.06);
@@ -251,8 +253,8 @@
 <div id="root"><div aria-hidden="true"><nav class="app-nav"><div class="nav-inner"><span class="nav-btn active"><span class="nav-icon">📊</span><span class="nav-label"> Dashboard</span></span><span class="nav-btn"><span class="nav-icon">🃏</span><span class="nav-label"> Cards</span></span><span class="nav-btn"><span class="nav-icon">📝</span><span class="nav-label"> Vlog</span></span></div></nav><main class="app-main"><div class="mb-24"><h1 class="fw-8 text-4xl">Study Hub <span class="pill" style="vertical-align:middle">v4.1.0</span></h1><p class="text-base o-60 mt-6">Your local-first certification study workspace.</p></div><div class="stats-row mb-16"><div class="card stat-card"><div class="stat-icon">🔥</div><div><div class="stat-label">Streak</div><div class="stat-value">0 days</div></div></div><div class="card stat-card"><div class="stat-icon">⏱️</div><div><div class="stat-label">Today</div><div class="stat-value">0 min</div></div></div><div class="card stat-card"><div class="stat-icon">📊</div><div><div class="stat-label">This Week</div><div class="stat-value">0 min</div></div></div></div><div class="card mb-16" style="min-height:141px"><div class="card-header"><h2 class="card-title">Weekly Activity</h2></div></div></main></div></div>
 
 <script type="module">
-import { createElement, Fragment, render } from "./vendor/preact.mjs";
-import { useState as preactUseState, useEffect as preactUseEffect, useCallback as preactUseCallback, useRef as preactUseRef, useMemo as preactUseMemo } from "./vendor/hooks.mjs";
+import { createElement, Fragment, render } from "https://esm.sh/preact@10.29.8?target=es2022";
+import { useState as preactUseState, useEffect as preactUseEffect, useCallback as preactUseCallback, useRef as preactUseRef, useMemo as preactUseMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
 const React={createElement,StrictMode:Fragment,useState:preactUseState,useEffect:preactUseEffect,useCallback:preactUseCallback,useRef:preactUseRef,useMemo:preactUseMemo};
 const ReactDOM={createRoot:(node)=>({render:(vnode)=>render(vnode,node)})};
 "use strict";
