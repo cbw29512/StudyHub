@@ -1,0 +1,15 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox"]
+    },
+    "timeout": 30000
+  },
+  "urls": [
+    "http://127.0.0.1:4173/index.html",
+    "http://127.0.0.1:4173/cards.html",
+    "http://127.0.0.1:4173/journal.html",
+    "http://127.0.0.1:4173/learning-projects.html"
+  ]
+}
