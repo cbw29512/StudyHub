@@ -107,6 +107,7 @@
     const certSelect = document.createElement("select");
     const domainSelect = document.createElement("select");
     const topicsArea = document.createElement("textarea");
+    topicsArea.setAttribute("aria-label", "Topics to turn into flashcards");
     const notesPrefix = document.createElement("input");
     notesPrefix.type = "text";
     notesPrefix.placeholder = "Optional prefix (ex: Explain / Define / Compare...)";
@@ -225,8 +226,12 @@
 
     const row2 = document.createElement("div");
     row2.className = "row";
+    const labTopics = document.createElement("label");
+    labTopics.textContent = "Topics (one per line)";
+    labTopics.style.width = "100%";
     topicsArea.placeholder = "Paste topics here (one per line)\nExample:\nOSI model layers\nTCP vs UDP\nWhat is ARP?";
-    row2.appendChild(topicsArea);
+    labTopics.appendChild(topicsArea);
+    row2.appendChild(labTopics);
 
     const row3 = document.createElement("div");
     row3.className = "row";
