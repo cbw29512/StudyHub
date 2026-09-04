@@ -1,0 +1,53 @@
+name: StudyHub Minimal Runtime Alias Fix
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.head_ref == 'release/public-hardening'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/public-hardening
+
+      - name: Alias imported hooks without changing app declarations
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = '''import { useState, useEffect, useCallback, useRef, useMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
+          const React={createElement,StrictMode:Fragment,useState,useEffect,useCallback,useRef,useMemo};
+          '''.replace('          ', '')
+          new = '''import { useState as preactUseState, useEffect as preactUseEffect, useCallback as preactUseCallback, useRef as preactUseRef, useMemo as preactUseMemo } from "https://esm.sh/preact@10.29.8/hooks?target=es2022";
+          const React={createElement,StrictMode:Fragment,useState:preactUseState,useEffect:preactUseEffect,useCallback:preactUseCallback,useRef:preactUseRef,useMemo:preactUseMemo};
+          '''.replace('          ', '')
+          if text.count(old) == 1 and text.count(new) == 0:
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print('Aliased Preact hooks behind existing React shim.')
+          elif text.count(old) == 0 and text.count(new) == 1:
+              print('Minimal runtime hook aliases already fixed.')
+          else:
+              raise SystemExit(f'Hook alias assertion failed: old={text.count(old)}, new={text.count(new)}')
+
+      - name: Commit alias fix when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- index.html; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: alias minimal runtime hooks"
+          git push origin HEAD:release/public-hardening
