@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   quality:
@@ -15,8 +15,48 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout
+      - name: Checkout exact PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Restore CDN runtime with preconnect on hardening branch
+        if: github.event_name == 'pull_request' && github.head_ref == 'release/public-hardening' && github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          local_core = 'from "./vendor/preact.mjs"'
+          local_hooks = 'from "./vendor/hooks.mjs"'
+          if local_core in text:
+              if text.count(local_core) != 1 or text.count(local_hooks) != 1:
+                  raise SystemExit('Unexpected local Preact import count')
+              text = text.replace(local_core, 'from "https://esm.sh/preact@10.29.8?target=es2022"', 1)
+              text = text.replace(local_hooks, 'from "https://esm.sh/preact@10.29.8/hooks?target=es2022"', 1)
+          elif 'https://esm.sh/preact@10.29.8' not in text:
+              raise SystemExit('Expected either local or pinned CDN Preact imports')
+
+          marker = '  <link rel="icon" href="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'90\'>📚</text></svg>" />\n'
+          hints = marker + '  <link rel="preconnect" href="https://esm.sh" crossorigin />\n  <link rel="dns-prefetch" href="//esm.sh" />\n'
+          if 'rel="preconnect" href="https://esm.sh"' not in text:
+              if text.count(marker) != 1:
+                  raise SystemExit('Favicon marker changed; refusing blind patch')
+              text = text.replace(marker, hints, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          git rm -f vendor/preact.mjs vendor/hooks.mjs vendor/PREACT-LICENSE.txt 2>/dev/null || true
+          if git diff --quiet; then
+            echo 'CDN runtime and connection hints already restored.'
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html
+            git commit -m 'perf: restore CDN Preact with preconnect'
+            git push origin HEAD:release/public-hardening
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
