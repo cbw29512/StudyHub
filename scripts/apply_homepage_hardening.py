@@ -44,6 +44,17 @@ def main() -> None:
 
     for old, new in REPLACEMENTS:
         old_count = text.count(old)
+        if new == "":
+            if old_count == 1:
+                text = text.replace(old, new, 1)
+                changed = True
+                continue
+            if old_count == 0:
+                continue
+            raise SystemExit(
+                f"Homepage hardening deletion assertion failed: old={old_count}, fragment={old[:80]!r}"
+            )
+
         new_count = text.count(new)
         if old_count == 1 and new_count == 0:
             text = text.replace(old, new, 1)
